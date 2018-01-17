@@ -31,15 +31,26 @@ aa = 0             # Angular induction factor
 # Derived quantities
 Omega = Lambda*U0/R     # Rotor angular velocity in radiants/s
 Area = R*R*math.pi      # Rotor area in m^2
-Pin = U0^3*Roh*Area     # Incoming wind power in W
+Pin = math.pow(U0,3)*Roh*Area     # Incoming wind power in W
 
 # Results
 Cp = 0             # Power Coefficient
+Ct = 0             # Thrust coefficient
 dM = [0] * n       # Momentm on each elment in Nm
-M = 0              # Total momntum in Nm 
-dD = [0] * n       # Drag force on each element in N
-D = 0              # Drag forcete
+M = 0              # Total momntum in Nm
+P = 0              # Power in W
+dT = [0] * n       # Thrust force on each element in N
+T = 0              # Thrust force
 Phi = [0] * n      # Angle of incoming wind in radiants
 Alpha = [0] * n    # Angle of attack in radiants
 
+# Main Program #######################################################################
+
+U = U0*(1-a)       # Wind speed at the turbine
+
+M = 0
+for value in dM:   # Calculation of total momentm
+    M += value*R/100
+P = M*Omega        # Calculation of output power
+Cp = P/Pin         # Calculation of Power coefficient
 
