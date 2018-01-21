@@ -10,6 +10,9 @@
 # Lbraries #############################################################################
 
 import math
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 # Functions ############################################################################
 
@@ -20,12 +23,11 @@ def finiteSums( function, dx ):
         integral += value*dx
     return value
 
-
 # Definition of Variales ###############################################################
 
 # Physical Parameters
 U0 = 10       # Incoming wind speed in m/s
-Roh = 1       # Air density in kg/m^3
+Rho = 1       # Air density in kg/m^3
 R = 50        # length of the blade in m
 N = 3         # Number of blades
 Lambda = 13   # Tip speed ratio
@@ -36,15 +38,15 @@ dx = R/100         # Blade element length
 
 # Blade characteristics
 
-cd = [0] * n       # Drag coefficient as function of alpha
-cl = [0] * n       # Drag coefficient as function of alpha
+cd = np.genfromtxt("LiftCoeff.txt", unpack=True)  # Drag coefficient as f(alpha), 1 value per degree
+cl = [0] * 30       # Drag coefficient as f(alpha), 1 value per degree
 c = [0] * n        # Airfoil chord in m as function of r
 Beta = [0] * n     # Twist angle in radiants as function of r
 
 # Derived quantities
 Omega = Lambda*U0/R     # Rotor angular velocity in radiants/s
 Area = R*R*math.pi      # Rotor area in m^2
-Pin = math.pow(U0,3)*Roh*Area     # Incoming wind power in W
+Pin = math.pow(U0,3)*Rho*Area     # Incoming wind power in W
 
 
 # Results
@@ -69,8 +71,9 @@ U = U0*(1-a)       # Wind speed at the turbine
 for i in range(n):
     Phi[i] = math.atan(U/Omega/dx/(i+1)/(1-aa))*180/math.pi
     Alpha[i] = Phi[i]-Beta[i]
-    dL(i) = cl[i]/2*Rho*U*U*c[i]*dx
-    dD(i) = cd[i]/2*Rho*U*U*c[i]*dx
+    dL[i] = cl[i]/2*Rho*U*U*c[i]*dx
+    dD[i] = cd[i]/2*Rho*U*U*c[i]*dx
+    
     
     
 
