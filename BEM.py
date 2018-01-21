@@ -32,8 +32,8 @@ dx = R/100    # Blade element length
 
 # Blade characteristics
 
-cl = np.genfromtxt("LiftCoeff.txt") # Lift coefficient as f(alpha), 1 value per degree
-cd = np.genfromtxt("DragCoeff.txt") # Drag coefficient as f(alpha), 1 value per degree
+cl_data = np.genfromtxt("LiftCoeff.txt") # Lift coefficient as f(alpha), 1 value per degree
+cd_data = np.genfromtxt("DragCoeff.txt") # Drag coefficient as f(alpha), 1 value per degree
 c = [2.0] * n                       # Airfoil chord in m as function of r
 Beta = np.genfromtxt("Beta.txt")*math.pi/180    # Twist angle in radiants as function of r
 
@@ -58,26 +58,42 @@ Alpha = [0.0] * n   # Angle of attack in radiants
 
 # Main Program #######################################################################
 
-a = 0.0             # Linear induction factor
-aa = 0.0            # Angular induction factor
+a_old = [0.0]*n             # Linear induction factor, initial guess
+aa_old = [0.0]*n            # Angular induction factor, initial guess
+Difference = 0.0
 
+a = a_old
+aa = aa_old
+Difference = 0.0
 for i in range(n):
     # Calculationg the angle of the incoming wind
-    Phi[i] = math.atan(U0*(1-a)/(Omega*dx*(i+1)*(1+aa)))
+    Phi[i] = math.atan(U0*(1-a[i])/(Omega*dx*(i+1)*(1+aa[i])))
     Alpha[i] = Phi[i]-Beta[i]
     # Calculationg relative velocity
-    Urel  = math.sqrt((U0*(1-a))**2+(Omega*dx*(i+1)*(1+aa))**2)
-    # Calculating drag and lift on the element by interpolationg coefficient data
-    dL[i] = 0.5*(cl[math.floor(Alpha[i])]+cl[math.ceil(Alpha[i])])*1/2*Rho*Urel**2*c[i]*dx
-    dD[i] = 0.5*(cd[math.floor(Alpha[i])]+cd[math.ceil(Alpha[i])])*1/2*Rho*Urel**2*c[i]*dx
+    Urel  = U0*(1-a[i])/math.sin(Phi[i]) # math.sqrt((U0*(1-a[i]))**2+(Omega*dx*(i+1)*(1+aa[i]))**2)
+    # Calculating drag and lift on the element from  interpolated coefficient data
+    cl = 0.5*(cl_data[math.floor(Alpha[i])]+cl_data[math.ceil(Alpha[i])])
+    cd = 0.5*(cd_data[math.floor(Alpha[i])]+cd_data[math.ceil(Alpha[i])])
+    dL[i] = N*cl*1/2*Rho*Urel**2*c[i]*dx
+    dD[i] = N*cd*1/2*Rho*Urel**2*c[i]*dx
+    # Calculation Momentum and Thrust from the forces
     dM[i] = (i+1)*dx*(dL[i]*math.sin(Phi[i])-dD[i]*math.cos(Phi[i]))
     dT[i] = dL[i]*math.cos(Phi[i])+dD[i]*math.sin(Phi[i])
+    # Calculation of the induction factors
+    Sigma = N*c[i]/(2*math.pi*dx*(i+1)) # Local solitity
+    a[i] = 1/(1+(4*math.sin(Phi[i])**2)/(Sigma*cl*math.cos(Phi[i])))
+    aa[i] = 1/((4*math.cos(Phi[i])/(Sigma*cl))-1)
+    Difference += (a_old[i]-a[i])**2+(aa_old[i]-aa[i])**2
+
+
+
+    
 
 M = sum(dM)     # Calculation of total momentum
 T = sum(dT)     # Calculation of total thrust     
 P = M*Omega     # Calculation of output power
 Cp = P/Pin      # Calculation of Power coefficient
-print(P, Pin, Cp)
+print("P= ", P , "\nPin= ", Pin, "\nCp= " , Cp)
 
 plt.plot(dM, "g-", label='Momentum')
 plt.plot(dT, "r-", label = 'Thrust')
