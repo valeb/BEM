@@ -38,10 +38,15 @@ dx = R/100         # Blade element length
 
 # Blade characteristics
 
-cd = np.genfromtxt("LiftCoeff.txt", unpack=True)  # Drag coefficient as f(alpha), 1 value per degree
-cl = [0] * 30       # Drag coefficient as f(alpha), 1 value per degree
+cl = np.genfromtxt("LiftCoeff.txt", unpack=True)  # Lift coefficient as f(alpha), 1 value per degree
+
+cd = np.genfromtxt("DragCoeff.txt", unpack=True)  # Drag coefficient as f(alpha), 1 value per degree
 c = [0] * n        # Airfoil chord in m as function of r
 Beta = [0] * n     # Twist angle in radiants as function of r
+for i in range(100):
+    Beta[i] = 0.008*i*i-1.6*i+70
+
+plt.plot(Beta)
 
 # Derived quantities
 Omega = Lambda*U0/R     # Rotor angular velocity in radiants/s
@@ -71,14 +76,18 @@ U = U0*(1-a)       # Wind speed at the turbine
 for i in range(n):
     Phi[i] = math.atan(U/Omega/dx/(i+1)/(1-aa))*180/math.pi
     Alpha[i] = Phi[i]-Beta[i]
-    dL[i] = cl[i]/2*Rho*U*U*c[i]*dx
-    dD[i] = cd[i]/2*Rho*U*U*c[i]*dx
-    
-    
-    
+    #dL[i] = (cl[math.floor(Alpha[i])]+cl[math.ceil(Alpha[i])])/2*Rho*U*U*c[i]*dx
+    #dD[i] = (cl[math.floor(Alpha[i])]+cl[math.ceil(Alpha[i])])/2/2*Rho*U*U*c[i]*dx
+
+plt.plot(Phi)
+plt.plot(Alpha)
+
+plt.show()
+
 
 M = sum(dM)        # Calculation of total momentum
 P = M*Omega        # Calculation of output power
 Cp = P/Pin         # Calculation of Power coefficient
+
 
 
