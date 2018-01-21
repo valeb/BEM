@@ -12,16 +12,10 @@
 import math
 import matplotlib.pyplot as plt
 import numpy as np
-
+import tkinter.filedialog
 
 # Functions ############################################################################
 
-def finiteSums( function, dx ):
-    "Summs the values in an array function multiplied by a stepsize dx"
-    integral = 0
-    for value in function:
-        integral += value*dx
-    return value
 
 # Definition of Variales ###############################################################
 
@@ -33,61 +27,64 @@ N = 3         # Number of blades
 Lambda = 13   # Tip speed ratio
 
 # Computational Parmeters
-n = 100            # Number of blade elements
-dx = R/100         # Blade element length
+n = 100       # Number of blade elements
+dx = R/100    # Blade element length
 
 # Blade characteristics
 
-cl = np.genfromtxt("LiftCoeff.txt", unpack=True)  # Lift coefficient as f(alpha), 1 value per degree
-
-cd = np.genfromtxt("DragCoeff.txt", unpack=True)  # Drag coefficient as f(alpha), 1 value per degree
-c = [0] * n        # Airfoil chord in m as function of r
-Beta = [0] * n     # Twist angle in radiants as function of r
-for i in range(100):
-    Beta[i] = 0.008*i*i-1.6*i+70
-
-plt.plot(Beta)
+cl = np.genfromtxt("LiftCoeff.txt") # Lift coefficient as f(alpha), 1 value per degree
+cd = np.genfromtxt("DragCoeff.txt") # Drag coefficient as f(alpha), 1 value per degree
+c = [2.0] * n                       # Airfoil chord in m as function of r
+Beta = np.genfromtxt("Beta.txt")*math.pi/180    # Twist angle in radiants as function of r
 
 # Derived quantities
 Omega = Lambda*U0/R     # Rotor angular velocity in radiants/s
-Area = R*R*math.pi      # Rotor area in m^2
-Pin = math.pow(U0,3)*Rho*Area     # Incoming wind power in W
+Area = R**2*math.pi      # Rotor area in m^2
+Pin = 1/2*U0**3*Rho*Area     # Incoming wind power in W
 
 
 # Results
-Cp = 0             # Power Coefficient
-Ct = 0             # Thrust coefficient
-dL = [0] * n       # Lift on each elment in N
-dD = [0] * n       # Drag on each elment in N
-dM = [0] * n       # Momentm on each elment in Nm
-M = 0              # Total momntum in Nm
-P = 0              # Power in W
-dT = [0] * n       # Thrust force on each element in N
-T = 0              # Thrust force
-Phi = [0] * n      # Angle of incoming wind in radiants
-Alpha = [0] * n    # Angle of attack in radiants
+Cp = 0.0            # Power Coefficient
+Ct = 0.0            # Thrust coefficient
+dL = [0.0] * n      # Lift on each elment in N
+dD = [0.0] * n      # Drag on each elment in N
+dM = [0.0] * n      # Momentm on each elment in Nm
+M = 0.0             # Total momntum in Nm
+P = 0.0             # Power in W
+dT = [0.0] * n      # Thrust force on each element in N
+T = 0.0             # Thrust force
+Phi = [0.0] * n     # Angle of incoming wind in radiants
+Alpha = [0.0] * n   # Angle of attack in radiants
 
 # Main Program #######################################################################
 
-a = 0              # Linear induction factor
-aa = 0             # Angular induction factor
-U = U0*(1-a)       # Wind speed at the turbine
+a = 0.0             # Linear induction factor
+aa = 0.0            # Angular induction factor
 
 for i in range(n):
-    Phi[i] = math.atan(U/Omega/dx/(i+1)/(1-aa))*180/math.pi
+    # Calculationg the angle of the incoming wind
+    Phi[i] = math.atan(U0*(1-a)/(Omega*dx*(i+1)*(1+aa)))
     Alpha[i] = Phi[i]-Beta[i]
-    #dL[i] = (cl[math.floor(Alpha[i])]+cl[math.ceil(Alpha[i])])/2*Rho*U*U*c[i]*dx
-    #dD[i] = (cl[math.floor(Alpha[i])]+cl[math.ceil(Alpha[i])])/2/2*Rho*U*U*c[i]*dx
+    # Calculationg relative velocity
+    Urel  = math.sqrt((U0*(1-a))**2+(Omega*dx*(i+1)*(1+aa))**2)
+    # Calculating drag and lift on the element by interpolationg coefficient data
+    dL[i] = 0.5*(cl[math.floor(Alpha[i])]+cl[math.ceil(Alpha[i])])*1/2*Rho*Urel**2*c[i]*dx
+    dD[i] = 0.5*(cd[math.floor(Alpha[i])]+cd[math.ceil(Alpha[i])])*1/2*Rho*Urel**2*c[i]*dx
+    dM[i] = (i+1)*dx*(dL[i]*math.sin(Phi[i])-dD[i]*math.cos(Phi[i]))
+    dT[i] = dL[i]*math.cos(Phi[i])+dD[i]*math.sin(Phi[i])
 
-plt.plot(Phi)
-plt.plot(Alpha)
+M = sum(dM)     # Calculation of total momentum
+T = sum(dT)     # Calculation of total thrust     
+P = M*Omega     # Calculation of output power
+Cp = P/Pin      # Calculation of Power coefficient
+print(P, Pin, Cp)
 
+plt.plot(dM, "g-", label='Momentum')
+plt.plot(dT, "r-", label = 'Thrust')
+plt.xlabel("Balde Element")
+plt.ylabel("Force in N / Momntum in Nm")
+plt.legend()
+plt.title("Momentum and thrust force on each blade eleent") 
 plt.show()
-
-
-M = sum(dM)        # Calculation of total momentum
-P = M*Omega        # Calculation of output power
-Cp = P/Pin         # Calculation of Power coefficient
-
 
 

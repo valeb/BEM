@@ -28,7 +28,14 @@ def functionname( parameters ):
    function_suite
    return [expression]
 
+# Write to File
+
+to_file  = open("Beta.txt", "w")
+to_file.write(str(var))
+to_file.close()
+
 # Plot graphs
+
 import math
 import matplotlib.pyplot as plt
 import numpy as np
