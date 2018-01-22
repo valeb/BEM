@@ -82,12 +82,12 @@ while (Difference > 10**(-8)) :
         # Calculationg the angle of the incoming wind
         Phi[i] = math.atan(U0*(1-a[i])/(Omega*dx*(i+1)*(1+aa[i])))
         Alpha[i] = Phi[i]-Beta[i]
+        if Alpha[i] < 0 :
+            Alpha[i] = 0
         # Calculationg relative velocity
         Urel  = U0*(1-a[i])/math.sin(Phi[i]) # OR PYTHAGORAS: math.sqrt((U0*(1-a[i]))**2+(Omega*dx*(i+1)*(1+aa[i]))**2)
         # Calculating drag and lift on the element from  interpolated coefficient data
-        print(Alpha[i])
         cl = cl_data[math.floor(Alpha[i]*180/math.pi)]*(math.ceil(Alpha[i]*180/math.pi)-Alpha[i]*180/math.pi) + cl_data[math.ceil(Alpha[i]*180/math.pi)]*(Alpha[i]*180/math.pi-math.floor(Alpha[i]*180/math.pi))
-        print(cl)
         cd = cd_data[math.floor(Alpha[i]*180/math.pi)]*(math.ceil(Alpha[i]*180/math.pi)-Alpha[i]*180/math.pi) + cd_data[math.ceil(Alpha[i]*180/math.pi)]*(Alpha[i]*180/math.pi-math.floor(Alpha[i]*180/math.pi))
         dL[i] = N*cl*1/2*Rho*Urel**2*c[i]*dx
         dD[i] = N*cd*1/2*Rho*Urel**2*c[i]*dx
