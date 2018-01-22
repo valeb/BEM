@@ -21,7 +21,7 @@ import tkinter.filedialog
 
 # Physical Parameters
 U0 = 10       # Incoming wind speed in m/s
-Rho = 1.225       # Air density in kg/m^3
+Rho = 1225       # Air density in kg/m^3
 R = 50        # length of the blade in m
 N = 3         # Number of blades
 Lambda = 7   # Tip speed ratio
@@ -36,6 +36,13 @@ cl_data = np.genfromtxt("LiftCoeff.txt") # Lift coefficient as f(alpha), 1 value
 cd_data = np.genfromtxt("DragCoeff.txt") # Drag coefficient as f(alpha), 1 value per degree
 c = [2.0] * n                       # Airfoil chord in m as function of r
 Beta = np.genfromtxt("Beta.txt")*math.pi/180    # Twist angle in radiants as function of r
+
+plt.figure()
+plt.plot(cl_data, label = "Lift Coefficient")
+plt.plot(cd_data, label = "Drag Coefficient")
+plt.xlabel("Angle of Attack in Degrees")
+plt.legend()
+
 
 # Derived quantities
 Omega = Lambda*U0/R     # Rotor angular velocity in radiants/s
@@ -68,7 +75,7 @@ aa_new = [0.0]*n
 counter = 0
 #evolution_a_mean = [0]
 # Loop for the iteration
-while (Difference > 0.0000001) :
+while (Difference > 10**(-8)) :
     Difference = 0.0
     counter += 1
     for i in range(n):
@@ -76,10 +83,12 @@ while (Difference > 0.0000001) :
         Phi[i] = math.atan(U0*(1-a[i])/(Omega*dx*(i+1)*(1+aa[i])))
         Alpha[i] = Phi[i]-Beta[i]
         # Calculationg relative velocity
-        Urel  = U0*(1-a[i])/math.sin(Phi[i]) # math.sqrt((U0*(1-a[i]))**2+(Omega*dx*(i+1)*(1+aa[i]))**2)
+        Urel  = U0*(1-a[i])/math.sin(Phi[i]) # OR PYTHAGORAS: math.sqrt((U0*(1-a[i]))**2+(Omega*dx*(i+1)*(1+aa[i]))**2)
         # Calculating drag and lift on the element from  interpolated coefficient data
-        cl = 0.5*(cl_data[math.floor(Alpha[i])]+cl_data[math.ceil(Alpha[i])])
-        cd = 0.5*(cd_data[math.floor(Alpha[i])]+cd_data[math.ceil(Alpha[i])])
+        print(Alpha[i])
+        cl = cl_data[math.floor(Alpha[i]*180/math.pi)]*(math.ceil(Alpha[i]*180/math.pi)-Alpha[i]*180/math.pi) + cl_data[math.ceil(Alpha[i]*180/math.pi)]*(Alpha[i]*180/math.pi-math.floor(Alpha[i]*180/math.pi))
+        print(cl)
+        cd = cd_data[math.floor(Alpha[i]*180/math.pi)]*(math.ceil(Alpha[i]*180/math.pi)-Alpha[i]*180/math.pi) + cd_data[math.ceil(Alpha[i]*180/math.pi)]*(Alpha[i]*180/math.pi-math.floor(Alpha[i]*180/math.pi))
         dL[i] = N*cl*1/2*Rho*Urel**2*c[i]*dx
         dD[i] = N*cd*1/2*Rho*Urel**2*c[i]*dx
         # Calculation Momentum and Thrust from the forces
@@ -96,25 +105,23 @@ while (Difference > 0.0000001) :
     print(counter, "Difference= ", Difference)
 # End of the iteration
 #plt.plot(evolution_a_mean)
+plt.figure()
 plt.plot(Beta, label = "Beta")
 plt.plot(Phi, label = "Phi")
 plt.plot(Alpha, label = "Alpha")
+plt.legend()
 
 M = sum(dM)     # Calculation of total momentum
 T = sum(dT)     # Calculation of total thrust     
 P = M*Omega     # Calculation of output power
 Cp = P/Pin      # Calculation of Power coefficient
-print("P= ", P , "\nPin= ", Pin, "\nCp= " , Cp)
+print("Pout= ", P , "\nPin= ", Pin, "\nCp= " , Cp)
 
-'''
+plt.figure()
 plt.plot(dM, "g-", label='Momentum')
 plt.plot(dT, "r-", label = 'Thrust')
 plt.xlabel("Balde Element")
 plt.ylabel("Force in N / Momntum in Nm")
 plt.title("Momentum and thrust force on each blade eleent") 
-'''
 plt.legend()
 plt.show()
-
-
-
