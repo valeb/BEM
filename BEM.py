@@ -32,9 +32,9 @@ dx = R/100    # Blade element length
 
 # Blade characteristics
 
-cl_data = np.genfromtxt("LiftCoeff.txt") # Lift coefficient as f(alpha), 1 value per degree
-cd_data = np.genfromtxt("DragCoeff.txt") # Drag coefficient as f(alpha), 1 value per degree
-c = [2.0] * n                       # Airfoil chord in m as function of r
+cl_data = np.genfromtxt("LiftCoeff.txt")        # Lift coefficient as f(alpha), 1 value per degree
+cd_data = np.genfromtxt("DragCoeff.txt")        # Drag coefficient as f(alpha), 1 value per degree
+c = [1.0] * n                                   # Airfoil chord in m as function of r
 Beta = np.genfromtxt("Beta.txt")*math.pi/180    # Twist angle in radiants as function of r
 
 plt.figure()
@@ -73,22 +73,26 @@ Difference = 999
 a_new = [0.0]*n
 aa_new = [0.0]*n
 counter = 0
-#evolution_a_mean = [0]
+evolution_a_mean = [0]
+evolution_aa_mean = [0]
 # Loop for the iteration
-while (Difference > 10**(-8)) :
+while (Difference > 10**(-3)) :
     Difference = 0.0
     counter += 1
     for i in range(n):
         # Calculationg the angle of the incoming wind
         Phi[i] = math.atan(U0*(1-a[i])/(Omega*dx*(i+1)*(1+aa[i])))
+        if Phi[i] > math.pi/2 :
+            Phi[i] = Phi[i] - math.pi
         Alpha[i] = Phi[i]-Beta[i]
-        if Alpha[i] < 0 :
-            Alpha[i] = 0
+        #if Alpha[i] < 0 :
+            #Alpha[i] = 0
+            #print(i, Alpha[i])
         # Calculationg relative velocity
         Urel  = U0*(1-a[i])/math.sin(Phi[i]) # OR PYTHAGORAS: math.sqrt((U0*(1-a[i]))**2+(Omega*dx*(i+1)*(1+aa[i]))**2)
         # Calculating drag and lift on the element from  interpolated coefficient data
-        cl = cl_data[math.floor(Alpha[i]*180/math.pi)]*(math.ceil(Alpha[i]*180/math.pi)-Alpha[i]*180/math.pi) + cl_data[math.ceil(Alpha[i]*180/math.pi)]*(Alpha[i]*180/math.pi-math.floor(Alpha[i]*180/math.pi))
-        cd = cd_data[math.floor(Alpha[i]*180/math.pi)]*(math.ceil(Alpha[i]*180/math.pi)-Alpha[i]*180/math.pi) + cd_data[math.ceil(Alpha[i]*180/math.pi)]*(Alpha[i]*180/math.pi-math.floor(Alpha[i]*180/math.pi))
+        cl = cl_data[14+math.floor(Alpha[i]*180/math.pi)]*(math.ceil(Alpha[i]*180/math.pi)-Alpha[i]*180/math.pi) + cl_data[14+math.ceil(Alpha[i]*180/math.pi)]*(Alpha[i]*180/math.pi-math.floor(Alpha[i]*180/math.pi))
+        cd = 0 #cd = cd_data[14+math.floor(Alpha[i]*180/math.pi)]*(math.ceil(Alpha[i]*180/math.pi)-Alpha[i]*180/math.pi) + cd_data[14+math.ceil(Alpha[i]*180/math.pi)]*(Alpha[i]*180/math.pi-math.floor(Alpha[i]*180/math.pi))
         dL[i] = N*cl*1/2*Rho*Urel**2*c[i]*dx
         dD[i] = N*cd*1/2*Rho*Urel**2*c[i]*dx
         # Calculation Momentum and Thrust from the forces
@@ -97,12 +101,18 @@ while (Difference > 10**(-8)) :
         # Calculation of the induction factors
         Sigma = N*c[i]/(2*math.pi*dx*(i+1)) # Local solitity
         a_new[i] = 1/(1+(4*math.sin(Phi[i])**2)/(Sigma*cl*math.cos(Phi[i])))
-        aa_new[i] = 1/((4*math.cos(Phi[i])/(Sigma*cl))-1)
+        aa_new[i] = max(1/((4*math.cos(Phi[i])/(Sigma*cl))-1), 0)
         Difference += (a_new[i]-a[i])**2+(aa_new[i]-aa[i])**2
         a[i] = a_new[i]
         aa[i] = aa_new[i]
-    #evolution_a_mean.append(sum(a)/n)
-    print(counter, "Difference= ", Difference)
+    evolution_a_mean.append(sum(a)/n)
+    evolution_aa_mean.append(sum(aa)/n)
+    print(counter, "Difference= ", Difference, "a_mean = ", evolution_a_mean[counter], "aa_mean = ", evolution_aa_mean[counter] )
+    M = sum(dM)     # Calculation of total momentum
+    T = sum(dT)     # Calculation of total thrust     
+    P = M*Omega     # Calculation of output power
+    Cp = P/Pin      # Calculation of Power coefficient
+    print("Pout= ", P , "\nPin= ", Pin, "\nCp= " , Cp)
 # End of the iteration
 #plt.plot(evolution_a_mean)
 plt.figure()
