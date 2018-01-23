@@ -24,7 +24,7 @@ U0 = 10       # Incoming wind speed in m/s
 Rho = 1225       # Air density in kg/m^3
 R = 50        # length of the blade in m
 N = 3         # Number of blades
-Lambda = 7   # Tip speed ratio
+Lambda = 8   # Tip speed ratio
 
 # Computational Parmeters
 n = 100       # Number of blade elements
@@ -75,6 +75,7 @@ aa_new = [0.0]*n
 counter = 0
 evolution_a_mean = [0]
 evolution_aa_mean = [0]
+
 # Loop for the iteration
 while (Difference > 10**(-3)) :
     Difference = 0.0
