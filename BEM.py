@@ -28,7 +28,8 @@ Lambda = 8   # Tip speed ratio
 
 # Computational Parmeters
 n = 100       # Number of blade elements
-dx = R/100    # Blade element length
+dr = R/100    # Blade element length
+r = np.arange(dr, R+dr, dr)     # radius of every element
 
 # Blade characteristics
 
@@ -82,7 +83,7 @@ while (Difference > 10**(-3)) :
     counter += 1
     for i in range(n):
         # Calculationg the angle of the incoming wind
-        Phi[i] = math.atan(U0*(1-a[i])/(Omega*dx*(i+1)*(1+aa[i])))
+        Phi[i] = math.atan(U0*(1-a[i])/(Omega*dr*(i+1)*(1+aa[i])))
         if Phi[i] > math.pi/2 :
             Phi[i] = Phi[i] - math.pi
         Alpha[i] = Phi[i]-Beta[i]
@@ -90,17 +91,15 @@ while (Difference > 10**(-3)) :
             #Alpha[i] = 0
             #print(i, Alpha[i])
         # Calculationg relative velocity
-        Urel  = U0*(1-a[i])/math.sin(Phi[i]) # OR PYTHAGORAS: math.sqrt((U0*(1-a[i]))**2+(Omega*dx*(i+1)*(1+aa[i]))**2)
-        # Calculating drag and lift on the element from  interpolated coefficient data
+        Urel  = U0*(1-a[i])/math.sin(Phi[i]) # OR PYTHAGORAS: math.sqrt((U0*(1-a[i]))**2+(Omega*dr*(i+1)*(1+aa[i]))**2)
+        # Calculating drag and lift coefficiet by interpolating coefficient data
         cl = cl_data[14+math.floor(Alpha[i]*180/math.pi)]*(math.ceil(Alpha[i]*180/math.pi)-Alpha[i]*180/math.pi) + cl_data[14+math.ceil(Alpha[i]*180/math.pi)]*(Alpha[i]*180/math.pi-math.floor(Alpha[i]*180/math.pi))
         cd = 0 #cd = cd_data[14+math.floor(Alpha[i]*180/math.pi)]*(math.ceil(Alpha[i]*180/math.pi)-Alpha[i]*180/math.pi) + cd_data[14+math.ceil(Alpha[i]*180/math.pi)]*(Alpha[i]*180/math.pi-math.floor(Alpha[i]*180/math.pi))
-        dL[i] = N*cl*1/2*Rho*Urel**2*c[i]*dx
-        dD[i] = N*cd*1/2*Rho*Urel**2*c[i]*dx
         # Calculation Momentum and Thrust from the forces
-        dM[i] = (i+1)*dx*(dL[i]*math.sin(Phi[i])-dD[i]*math.cos(Phi[i]))
-        dT[i] = dL[i]*math.cos(Phi[i])+dD[i]*math.sin(Phi[i])
+        dM[i] = N*0.5*Rho*Urel**2*(cl*math.sin(Phi[i])-cd*math.cos(Phi[i]))*c[i]*r[i]*dr
+        dT[i] = N*0.5*Rho*Urel**2*(cl*math.cos(Phi[i])+cd*math.sin(Phi[i]))*c[i]*dr
         # Calculation of the induction factors
-        Sigma = N*c[i]/(2*math.pi*dx*(i+1)) # Local solitity
+        Sigma = N*c[i]/(2*math.pi*dr*(i+1)) # Local solitity
         a_new[i] = 1/(1+(4*math.sin(Phi[i])**2)/(Sigma*cl*math.cos(Phi[i])))
         aa_new[i] = max(1/((4*math.cos(Phi[i])/(Sigma*cl))-1), 0)
         Difference += (a_new[i]-a[i])**2+(aa_new[i]-aa[i])**2
