@@ -1,14 +1,24 @@
 \chapter{Introduction}
 
-\section{Background and Recent Research}
-\subsection{<any sub section here>}
+\section{The blade element momentum theory}
 
-\subsection{Literature Survey}
+The blade element momentum method is a simplified model to transform the steady state flow field of the wind into loads on the turbine. It combines the momentum theory, used to derive the Betz limit for wind turbine efficiency, with the blade element theory. Momentum theory is based in a balance of linear and angular momentum in a control volume around a generic wind turbine, and is used for example to derive the Betz limit for wind turbine efficiency. Blade element theory consists in the analysis of aerodynamic forces on the section of a blade created by an incoming flow. In combining the two theories, a simple model for the calculation of wind turbine efficiency as well as loads on the blades can be derived.
 
-\subsubsection{<Sub-subsection title>}
-some text\cite{citation-1-name-here}, some more text
+< IMAGE: MOMENTUM THEORY; FORCES ON BLADE ELEMENT>
 
-\subsubsection{<Sub-subsection title>}
-even more text\footnote{<footnote here>}, and even more.
+The model is based on many approximations that can be justified by the simplicity of the obtained model. They include:
+\begin{itemize}
+	\item Uniform, incompressible, perpendicularly incoming flow
+	\item Independence between annular sections
+	\item Independence between blades
+	\item No losses at tip or base
+	\item Perfectly rigid blade
+\end{itemize}
+
+The strongest approximations are the assumptions on the incoming flow as well as the total independence between the blades and blade elements. An other effect that is not modelled with this theory is the wake expansion.
+
+Regardless of these limitation, the model can still provide useful results for wind turbine design and pitch angle optimization for a given airfoil shape and at a given wind. Furthermore the results can be used to determine the loads on the blades, and therefore dimension the blade accordingly.\cite{manwell2010wind}
 
 \section{Motivation}
+
+Th work described in the following has been done to familiarise with the blade element momentum method, and to get a quantitative and qualitative feel for how different parameters affect the operation of the wind turbine.

@@ -1,6 +1,6 @@
 \chapter{Problem Definition}
 
-The objective of this project is to numerically compute, for a given incoming wind and a given turbine, the loads on the blades and the power coefficient. The turbine is characterized by number of blades, blade length, airfoil shape and cord as well as pitch angle. The behaviour of the airfoil is described by empiric curves that describe drag and lift coefficient as function of the angle of attack. The blades are assumed perfectly stiff. The turbine is considered in a steady state, with controlled angular velocity $\Omega$, and the blades are not subjct to gravity. The incoming wind is assumed incompressible, uniform and perpendicular to the swept area of the turbine. It is only characterized by the upstream velocity $U_0$ and the constant density $\rho$. Blade element momentum theory is applied to create a computational model to solve the given problem.
+The objective of this project is to numerically compute, for a given incoming wind and a given turbine, the loads on the blades and the power coefficient. The turbine is characterized by number of blades, blade length, airfoil shape and cord as well as pitch angle. The behaviour of the airfoil is described by empiric curves that describe drag and lift coefficient as function of the angle of attack. End effects near the base and tip of the blade are neglected. Also ignored are the effects of the wake of a blade on the next, and blades are assumed perfectly rigid. The turbine is considered in a steady state, with controlled angular velocity $\Omega$, and the blades are not subject to gravity. The incoming wind is assumed incompressible, uniform and perpendicular to the swept area of the turbine. It is only characterized by the upstream velocity $U_0$ and the constant density $\rho$. Blade element momentum theory is applied to create a computational model to solve the given problem.
 
 The model is run multiple times while varying a variety of parameters, in order to analyse the sensitivity of the wind turbine power output to changes in these parameters. No optimization algorithm is proposed.
 
@@ -19,11 +19,11 @@ The parameters of the problem with their respective unit of measurement are defi
 	\hline	
 	$U_0$ & m/s & Incoming wind speed \\
 	\hline
-	$c$ & m & Airfoil cord \\
+	$c$ & m & Airfoil chord length \\
 	\hline
-	$c_l$ & - & Lift coefficient \\
+	$C_l$ & - & Lift coefficient \\
 	\hline	
-	$c_d$ & - & Drag coefficient \\
+	$C_d$ & - & Drag coefficient \\
 	\hline	
 	$a$ & - & Induction factor \\
 	\hline	
@@ -33,13 +33,13 @@ The parameters of the problem with their respective unit of measurement are defi
 	\hline	
 	$\beta$ & rad & Pitch angle \\
 	\hline	
-	$\phi$ & rad & Relative angle of incoming wind \\
+	$\phi$ & rad & Flow angle \\
 	\hline		
 	$C_p$ & - & Power coefficient \\
 	\hline		
-	$M$ & Nm & Momentum on the turbine \\
+	$M$ & Nm & Rotor torque \\
 	\hline		
-	$T$ & N & Thrust force on the turbine \\
+	$T$ & N & Thrust \\
 	\hline
 \end{tabular}
 \end{center}
