@@ -87,14 +87,11 @@ while (Difference > 10**(-3)) :
         if Phi[i] > math.pi/2 :
             Phi[i] = Phi[i] - math.pi
         Alpha[i] = Phi[i]-Beta[i]
-        #if Alpha[i] < 0 :
-            #Alpha[i] = 0
-            #print(i, Alpha[i])
         # Calculationg relative velocity
         Urel  = U0*(1-a[i])/math.sin(Phi[i]) # OR PYTHAGORAS: math.sqrt((U0*(1-a[i]))**2+(Omega*dr*(i+1)*(1+aa[i]))**2)
         # Calculating drag and lift coefficiet by interpolating coefficient data
         cl = cl_data[14+math.floor(Alpha[i]*180/math.pi)]*(math.ceil(Alpha[i]*180/math.pi)-Alpha[i]*180/math.pi) + cl_data[14+math.ceil(Alpha[i]*180/math.pi)]*(Alpha[i]*180/math.pi-math.floor(Alpha[i]*180/math.pi))
-        cd = 0 #cd = cd_data[14+math.floor(Alpha[i]*180/math.pi)]*(math.ceil(Alpha[i]*180/math.pi)-Alpha[i]*180/math.pi) + cd_data[14+math.ceil(Alpha[i]*180/math.pi)]*(Alpha[i]*180/math.pi-math.floor(Alpha[i]*180/math.pi))
+        cd = cd_data[14+math.floor(Alpha[i]*180/math.pi)]*(math.ceil(Alpha[i]*180/math.pi)-Alpha[i]*180/math.pi) + cd_data[14+math.ceil(Alpha[i]*180/math.pi)]*(Alpha[i]*180/math.pi-math.floor(Alpha[i]*180/math.pi))
         # Calculation Momentum and Thrust from the forces
         dM[i] = N*0.5*Rho*Urel**2*(cl*math.sin(Phi[i])-cd*math.cos(Phi[i]))*c[i]*r[i]*dr
         dT[i] = N*0.5*Rho*Urel**2*(cl*math.cos(Phi[i])+cd*math.sin(Phi[i]))*c[i]*dr
@@ -135,3 +132,8 @@ plt.ylabel("Force in N / Momntum in Nm")
 plt.title("Momentum and thrust force on each blade eleent") 
 plt.legend()
 plt.show()
+
+file = open("Alpha.txt","w") 
+for num in Alpha:
+    file.write(str(num) + "\n")
+file.close() 
