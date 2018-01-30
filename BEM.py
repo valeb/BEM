@@ -35,7 +35,7 @@ r = np.arange(dr, R+dr, dr)     # radius of every element
 
 cl_data = np.genfromtxt("LiftCoeff.txt")        # Lift coefficient as f(alpha), 1 value per degree
 cd_data = np.genfromtxt("DragCoeff.txt")        # Drag coefficient as f(alpha), 1 value per degree
-c = [1.0] * n                                   # Airfoil chord in m as function of r
+c = [1] * n                                   # Airfoil chord in m as function of r
 Beta = np.genfromtxt("Beta.txt")*math.pi/180    # Twist angle in radiants as function of r
 
 plt.figure()
@@ -61,8 +61,8 @@ M = 0.0             # Total momntum in Nm
 P = 0.0             # Power in W
 dT = [0.0] * n      # Thrust force on each element in N
 T = 0.0             # Thrust force
-Phi = [0.0] * n     # Angle of incoming wind in radiants
-Alpha = [0.0] * n   # Angle of attack in radiants
+Phi = np.empty(n)   # Angle of incoming wind in radiants
+Alpha = np.empty(n) # Angle of attack in radiants
 
 # Main Program #######################################################################
 
@@ -96,8 +96,8 @@ while (Difference > 10**(-3)) :
         dM[i] = N*0.5*Rho*Urel**2*(cl*math.sin(Phi[i])-cd*math.cos(Phi[i]))*c[i]*r[i]*dr
         dT[i] = N*0.5*Rho*Urel**2*(cl*math.cos(Phi[i])+cd*math.sin(Phi[i]))*c[i]*dr
         # Calculation of the induction factors
-        Sigma = N*c[i]/(2*math.pi*dr*(i+1)) # Local solitity
-        a_new[i] = 1/(1+(4*math.sin(Phi[i])**2)/(Sigma*cl*math.cos(Phi[i])))
+        Sigma = N*c[i]/(2*math.pi*r[i]) # Local solitity
+        a_new[i] = 1/(1+(2*math.sin(Phi[i]))**2/(Sigma*cl*math.cos(Phi[i])))
         aa_new[i] = max(1/((4*math.cos(Phi[i])/(Sigma*cl))-1), 0)
         Difference += (a_new[i]-a[i])**2+(aa_new[i]-aa[i])**2
         a[i] = a_new[i]
@@ -113,20 +113,22 @@ while (Difference > 10**(-3)) :
 # End of the iteration
 #plt.plot(evolution_a_mean)
 plt.figure()
-plt.plot(Beta, label = "Beta")
-plt.plot(Phi, label = "Phi")
-plt.plot(Alpha, label = "Alpha")
+plt.plot(r, Beta/math.pi*180, label = "Beta")
+plt.plot(r, Phi/math.pi*180, label = "Phi")
+plt.plot(r, Alpha/math.pi*180, label = "Alpha")
 plt.legend()
 
-M = sum(dM)     # Calculation of total momentum
-T = sum(dT)     # Calculation of total thrust     
-P = M*Omega     # Calculation of output power
-Cp = P/Pin      # Calculation of Power coefficient
-print("Pout= ", P , "\nPin= ", Pin, "\nCp= " , Cp)
+plt.figure()
+plt.plot(r,a,label = "a")
+plt.legend()
 
 plt.figure()
-plt.plot(dM, "g-", label='Momentum')
-plt.plot(dT, "r-", label = 'Thrust')
+plt.plot(r,aa, label = "a'")
+plt.legend()
+
+plt.figure()
+plt.plot(r, dM, "g-", label='Momentum')
+plt.plot(r, dT, "r-", label = 'Thrust')
 plt.xlabel("Balde Element")
 plt.ylabel("Force in N / Momntum in Nm")
 plt.title("Momentum and thrust force on each blade eleent") 
