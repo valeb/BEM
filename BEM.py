@@ -2,8 +2,9 @@
 #                                                                       #
 #  Performance analysis of a wind turbine for a given incoming wind     #
 #                                                                       #
-#  Version 1, 16/01/2018                                                #
+#  Alija Bajramovic                                                     #
 #  Valentin Bernard                                                     #
+#  Naven Goutham                                                        #
 #                                                                       #
 #########################################################################
 
@@ -21,7 +22,7 @@ def LiftCoeff (alpha):
         Cl = 0.42625 + 0.11628 * alpha - 0.00063973 * alpha**2 - 8.712 * 10**(-5) * alpha**3 - 4.2576 * 10**(-6)*alpha**4
     else:
         Cl = 0.95
-    return Cl
+    return Cl    
 
 # Definition of Variales ###############################################################
 
@@ -38,8 +39,8 @@ dr = R/100    # Blade element length
 r = np.arange(dr, R+dr, dr)     # radius of every element
 
 # Blade characteristics
-c = [0] * n                                   # Airfoil chord in m as function of r
-Beta = np.genfromtxt("Beta.txt")*math.pi/180    # Twist angle in radiants as function of r
+c = [1] * n                                 # Airfoil chord in m as function of r
+Beta = np.genfromtxt("Beta.txt")            # Twist angle in radiants as function of r
 
 # Derived quantities
 Omega = Lambda*U0/R     # Rotor angular velocity in radiants/s
@@ -78,16 +79,12 @@ while (Difference > 10**(-8)) :
     for i in range(n):
         # Calculationg the angle of the incoming wind
         Phi[i] = math.atan(U0*(1-a[i])/(Omega*r[i]*(1+aa[i])))
-        if counter == 1 : # Beta is defined during the first iteration
-            Beta[i] = Phi[i] - 3/180*math.pi
         Alpha[i] = Phi[i]-Beta[i]
         # Calculationg relative velocity
         Urel  = U0*(1-a[i])/math.sin(Phi[i])
         # Calculating drag and lift coefficiet by interpolating coefficient data
         cl = LiftCoeff(Alpha[i])
         cd = 0
-        if counter == 1 : # c also is defined during the first iteration
-            c[i] = 3 # 8*math.pi*r[i]*math.sin(Phi[i])/(3*N*cl*Omega*r[i]/U0)
         # Calculation Momentum and Thrust from the forces
         dM[i] = N*0.5*Rho*Urel**2*(cl*math.sin(Phi[i])-cd*math.cos(Phi[i]))*c[i]*r[i]*dr
         dT[i] = N*0.5*Rho*Urel**2*(cl*math.cos(Phi[i])+cd*math.sin(Phi[i]))*c[i]*dr
