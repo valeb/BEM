@@ -36,8 +36,8 @@ Beta = np.zeros(n)
 file = open("Beta.txt","w") 
 for i in range(n):
     # Calculationg the angle of the incoming wind
-    Phi[i] = math.atan(U0/(Omega*r[i]))
-    Beta[i] = Phi[i] - 15/180*math.pi
+    Phi[i] = math.atan(U0*(2/3)/(Omega*r[i]))
+    Beta[i] = Phi[i] - 14/180*math.pi
     file.write(str(Beta[i]) + "\n")
 file.close() 
 
