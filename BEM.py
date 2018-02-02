@@ -41,7 +41,7 @@ r = r_e -(dr/2)                     # Midpoint radius
 Lambda_r = r*Lambda/R               # Local tip speed ratio
 
 # Blade characteristics
-c = [1] * n                         # Airfoil chord in m as function of r
+c = np.genfromtxt("c.txt")          # Airfoil chord in m as function of r
 Beta = np.genfromtxt("Beta.txt")    # Twist angle in radiants as function of r
 
 # Derived quantities
@@ -75,29 +75,30 @@ aa = [0.0]*n                        # Angular induction factor, initial guess
 Difference = 999
 
 # Loop for the iteration
-while (Difference > 10**(-10)) :
+while (Difference > 10**(-5)) :
     Difference = 0.0
-    for i in range(n):
+    for i in range(10, n):
         # Calculationg the angle of the incoming wind
         Phi[i] = math.atan((1-a[i])/(1+aa[i])/Lambda_r[i])
         Alpha[i] = Phi[i]-Beta[i]
         # Calculating drag and lift coefficiet from empiric equation
-        Cl = LiftCoeff(Alpha[i])
+        Cl = LiftCoeff(Alpha[i]*180/math.pi)
         Cd = 0
-        # Calculation of the induction factors
+        # Calculation of the new induction factors
         a_new = 1/(1+(2*math.sin(Phi[i]))**2/(Sigma[i]*Cl*math.cos(Phi[i])))
-        aa_new = max(0, 1/((4*math.cos(Phi[i])/(Sigma[i]*Cl))-1))
-        if i > 5: Difference += (a_new-a[i])**2+(aa_new-aa[i])**2
+        aa_new = 1/((4*math.cos(Phi[i])/(Sigma[i]*Cl))-1)
+        if i > 10: Difference += (a_new-a[i])**2+(aa_new-aa[i])**2
         a[i] = a_new
         aa[i] = aa_new
+    print(Difference)
 # End of the iteration, a and aa are now final, and so are the lists of Alpha[i] and Phi[i]
 
 # Calculate the Forces and power of the turbine
-for i in range(n):
+for i in range(10,n):
     # Calculationg relative velocity
     Urel  = U0*(1-a[i])/math.sin(Phi[i])
     # Calculating drag and lift coefficiet from empiric equation
-    Cl = LiftCoeff(Alpha[i])
+    Cl = LiftCoeff(Alpha[i]*180/math.pi)
     Cd = 0
     # Calculation Momentum and Thrust from the forces
     dM[i] = N*0.5*Rho*Urel**2*(Cl*math.sin(Phi[i])-Cd*math.cos(Phi[i]))*c[i]*r[i]*dr
@@ -113,30 +114,29 @@ print("Pout= ", P , "Pin= ", Pin, "Cp= " , Cp)
 
 # Plot Angles
 plt.figure()
-plt.plot(r, Beta/math.pi*180, label = "Beta")
-plt.plot(r, Phi/math.pi*180, label = "Phi")
-plt.plot(r, Alpha/math.pi*180, label = "Alpha")
+plt.plot(r[10:], Beta[10:]/math.pi*180, label = "Beta")
+plt.plot(r[10:], Phi[10:]/math.pi*180, label = "Phi")
+plt.plot(r[10:], Alpha[10:]/math.pi*180, label = "Alpha")
 plt.legend()
 #plt.xlim(left = 3)
+
+# Plot Cl Curve
+plt.figure()
+plotalpha = np.arange(-10, 30 , 0.1)
+plotcl = np.zeros(len(plotalpha))
+for i in range(len(plotalpha)) :
+    plotcl[i] = LiftCoeff(plotalpha[i])
+plt.plot(plotalpha[10:], plotcl[10:], label = "Cl(alpha)")
+plt.legend()
 
 # Plot the 2 induction factors along the blade
 
 # Two subplots, unpack the axes array immediately
 f, (ax1, ax2) = plt.subplots(1, 2, sharey=False)
-ax1.plot(r,a)
-ax2.plot(r,aa)
+ax1.plot(r[10:],a[10:])
+ax2.plot(r[10:],aa[10:])
 ax1.set_title("a(r)")
 ax2.set_title("a'(r)")
-
-# Plot Torque and Thrust on the blade elements
-plt.figure()
-plt.plot(r, dM, "g-", label='Momentum')
-plt.plot(r, dT, "r-", label = 'Thrust')
-plt.xlabel("Balde Element")
-plt.ylabel("Force in N / Momntum in Nm")
-plt.title("Momentum and thrust force on each blade eleent") 
-plt.legend()
-#plt.xlim(left = 3)
 
 # File output ############################################################################
 
