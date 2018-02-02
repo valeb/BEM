@@ -36,7 +36,9 @@ Lambda = 8                          # Tip speed ratio
 # Computational Parmeters
 n = 100                             # Number of blade elements
 dr = R/100                          # Blade element length
-r = np.arange(dr, R+dr, dr)         # radius of every element
+r_e = np.arange(dr, R+dr, dr)       # End point radius of every element
+r = r_e -(dr/2)                     # Midpoint radius
+Lambda_r = r*Lambda/R               # Local tip speed ratio
 
 # Blade characteristics
 c = [1] * n                         # Airfoil chord in m as function of r
@@ -79,7 +81,7 @@ while (Difference > 10**(-10)) :
     counter += 1
     for i in range(n):
         # Calculationg the angle of the incoming wind
-        Phi[i] = math.atan(U0*(1-a[i])/(Omega*r[i]*(1+aa[i])))
+        Phi[i] = math.atan((1-a[i])/(1+aa[i])/Lambda_r[i])
         Alpha[i] = Phi[i]-Beta[i]
         # Calculationg relative velocity
         Urel  = U0*(1-a[i])/math.sin(Phi[i])

@@ -25,7 +25,7 @@ Omega = Lambda*U0/R     # Rotor angular velocity in radiants/s
 # Computational Parmeters
 n = 100       # Number of blade elements
 dr = R/100    # Blade element length
-r = np.arange(dr, R+dr, dr)     # radius of every element
+r = np.arange(dr, R+dr, dr) - dr/2  # Mid point radius of every element
 
 # Results
 Phi = np.zeros(n)   # Angle of incoming wind in radiants
