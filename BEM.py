@@ -73,36 +73,41 @@ aa = [0.0]*n                        # Angular induction factor, initial guess
 
 # Variables for the iteration
 Difference = 999
-counter = 0
 
 # Loop for the iteration
 while (Difference > 10**(-10)) :
     Difference = 0.0
-    counter += 1
     for i in range(n):
         # Calculationg the angle of the incoming wind
         Phi[i] = math.atan((1-a[i])/(1+aa[i])/Lambda_r[i])
         Alpha[i] = Phi[i]-Beta[i]
-        # Calculationg relative velocity
-        Urel  = U0*(1-a[i])/math.sin(Phi[i])
         # Calculating drag and lift coefficiet from empiric equation
         Cl = LiftCoeff(Alpha[i])
-        cd = 0
-        # Calculation Momentum and Thrust from the forces
-        dM[i] = N*0.5*Rho*Urel**2*(Cl*math.sin(Phi[i])-cd*math.cos(Phi[i]))*c[i]*r[i]*dr
-        dT[i] = N*0.5*Rho*Urel**2*(Cl*math.cos(Phi[i])+cd*math.sin(Phi[i]))*c[i]*dr
+        Cd = 0
         # Calculation of the induction factors
         a_new = 1/(1+(2*math.sin(Phi[i]))**2/(Sigma[i]*Cl*math.cos(Phi[i])))
         aa_new = max(0, 1/((4*math.cos(Phi[i])/(Sigma[i]*Cl))-1))
         if i > 5: Difference += (a_new-a[i])**2+(aa_new-aa[i])**2
         a[i] = a_new
         aa[i] = aa_new
-    M = sum(dM)     # Calculation of total momentum
-    T = sum(dT)     # Calculation of total thrust     
-    P = M*Omega     # Calculation of output power
-    Cp = P/Pin      # Calculation of Power coefficient
-    print(counter, ":", "Pout= ", P , "Pin= ", Pin, "Cp= " , Cp)
-# End of the iteration
+# End of the iteration, a and aa are now final, and so are the lists of Alpha[i] and Phi[i]
+
+# Calculate the Forces and power of the turbine
+for i in range(n):
+    # Calculationg relative velocity
+    Urel  = U0*(1-a[i])/math.sin(Phi[i])
+    # Calculating drag and lift coefficiet from empiric equation
+    Cl = LiftCoeff(Alpha[i])
+    Cd = 0
+    # Calculation Momentum and Thrust from the forces
+    dM[i] = N*0.5*Rho*Urel**2*(Cl*math.sin(Phi[i])-Cd*math.cos(Phi[i]))*c[i]*r[i]*dr
+    dT[i] = N*0.5*Rho*Urel**2*(Cl*math.cos(Phi[i])+Cd*math.sin(Phi[i]))*c[i]*dr
+M = sum(dM)     # Calculation of total momentum
+T = sum(dT)     # Calculation of total thrust     
+P = M*Omega     # Calculation of output power
+Cp = P/Pin      # Calculation of Power coefficient
+
+print("Pout= ", P , "Pin= ", Pin, "Cp= " , Cp)
 
 # Plots ################################################################################
 
