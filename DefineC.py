@@ -36,7 +36,8 @@ Cl = LiftCoeff(14)
 # Computational Parmeters
 n = 100       # Number of blade elements
 dr = R/100    # Blade element length
-r = np.arange(dr, R+dr, dr) - dr/2  # Mid point radius of every element
+r = np.arange(dr, R+dr, dr)         # Mid point radius of every element
+Lambda_r = r*Lambda/R               # Local tip speed ratio
 
 # Results
 Phi = np.zeros(n)   # Angle of incoming wind in radiants
@@ -47,7 +48,7 @@ c = np.zeros(n)     # Chord at each element
 file = open("c.txt","w") 
 for i in range(n):
     # Calculationg the angle of the incoming wind
-    Phi[i] = math.atan(U0*(2/3)/(Omega*r[i]))
+    Phi[i] = 2/3*math.atan(1/Lambda_r[i])
     c[i] = 8*math.pi*r[i]/N/Cl*(1-math.cos(Phi[i]))
     file.write(str(c[i]) + "\n")
 file.close() 

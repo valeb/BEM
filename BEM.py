@@ -36,8 +36,7 @@ Lambda = 8                          # Tip speed ratio
 # Computational Parmeters
 n = 100                             # Number of blade elements
 dr = R/100                          # Blade element length
-r_e = np.arange(dr, R+dr, dr)       # End point radius of every element
-r = r_e -(dr/2)                     # Midpoint radius
+r = np.arange(dr, R+dr, dr)         # End point radius of every element
 Lambda_r = r*Lambda/R               # Local tip speed ratio
 
 # Blade characteristics
@@ -107,6 +106,7 @@ M = sum(dM)     # Calculation of total momentum
 T = sum(dT)     # Calculation of total thrust     
 P = M*Omega     # Calculation of output power
 Cp = P/Pin      # Calculation of Power coefficient
+
 
 print("Pout= ", P , "Pin= ", Pin, "Cp= " , Cp)
 
