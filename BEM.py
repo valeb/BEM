@@ -144,10 +144,19 @@ ax2.set_title("a'(r)")
 # File output ############################################################################
 
 # Export resulting Alpha along the blade
+file = open("a.txt","w") 
+for num in a:
+    file.write(str(num) + "\n")
+file.close()
+
+file = open("aa.txt","w") 
+for num in aa:
+    file.write(str(num) + "\n")
+file.close()
+
 file = open("Alpha.txt","w") 
 for num in Alpha:
     file.write(str(num) + "\n")
 file.close()
-
 
 plt.show() 
