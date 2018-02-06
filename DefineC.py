@@ -26,17 +26,18 @@ def LiftCoeff (alpha):
 # Definition of Variales ###############################################################
 
 # Physical Parameters
-U0 = 10     # Incoming wind speed in m/s
-R = 50      # length of the blade in m
-N = 3       # Number of blades
-Lambda = 8  # Tip speed ratio
-Omega = Lambda*U0/R     # Rotor angular velocity in radiants/s
+U0 = 10                             # Incoming wind speed in m/s
+R = 50                              # length of the blade in m
+R_i = 5                             # Inner radius in m
+N = 3                               # Number of blades
+Lambda = 8                          # Tip speed ratio
+Omega = Lambda*U0/R                 # Rotor angular velocity in radiants/s
 Cl = LiftCoeff(14)
 
 # Computational Parmeters
-n = 100       # Number of blade elements
-dr = R/100    # Blade element length
-r = np.arange(dr, R+dr, dr)         # Mid point radius of every element
+n = 100                             # Number of blade elements
+dr = (R-R_i)/n                      # Blade element length
+r = np.arange(dr+R_i, R+dr, dr)     # Mid point radius of every element
 Lambda_r = r*Lambda/R               # Local tip speed ratio
 
 # Results

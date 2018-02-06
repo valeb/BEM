@@ -1,6 +1,7 @@
 #########################################################################
 #                                                                       #
 #  Performance analysis of a wind turbine for a given incoming wind     #
+#  using blade element momentum theory                                  #
 #                                                                       #
 #  Alija Bajramovic                                                     #
 #  Valentin Bernard                                                     #
@@ -30,13 +31,15 @@ def LiftCoeff (alpha):
 U0 = 10                             # Incoming wind speed in m/s
 Rho = 1.225                         # Air density in kg/m^3
 R = 50                              # length of the blade in m
+R_i = 5                             # Inner radius in m
 N = 3                               # Number of blades
 Lambda = 8                          # Tip speed ratio
 
+
 # Computational Parmeters
 n = 100                             # Number of blade elements
-dr = R/100                          # Blade element length
-r = np.arange(dr, R+dr, dr)         # End point radius of every element
+dr = (R-R_i)/n                      # Blade element length
+r = np.arange(dr+R_i, R+dr, dr)     # Mid point radius of every element
 Lambda_r = r*Lambda/R               # Local tip speed ratio
 
 # Blade characteristics
@@ -76,7 +79,7 @@ Difference = 999
 # Loop for the iteration
 while (Difference > 10**(-5)) :
     Difference = 0.0
-    for i in range(10, n):
+    for i in range(n):
         # Calculationg the angle of the incoming wind
         Phi[i] = math.atan((1-a[i])/(1+aa[i])/Lambda_r[i])
         Alpha[i] = Phi[i]-Beta[i]
@@ -93,7 +96,7 @@ while (Difference > 10**(-5)) :
 # End of the iteration, a and aa are now final, and so are the lists of Alpha[i] and Phi[i]
 
 # Calculate the Forces and power of the turbine
-for i in range(10,n):
+for i in range(n):
     # Calculationg relative velocity
     Urel  = U0*(1-a[i])/math.sin(Phi[i])
     # Calculating drag and lift coefficiet from empiric equation
@@ -114,9 +117,9 @@ print("Pout= ", P , "Pin= ", Pin, "Cp= " , Cp)
 
 # Plot Angles
 plt.figure()
-plt.plot(r[10:], Beta[10:]/math.pi*180, label = "Beta")
-plt.plot(r[10:], Phi[10:]/math.pi*180, label = "Phi")
-plt.plot(r[10:], Alpha[10:]/math.pi*180, label = "Alpha")
+plt.plot(r, Beta/math.pi*180, label = "Beta")
+plt.plot(r, Phi/math.pi*180, label = "Phi")
+plt.plot(r, Alpha/math.pi*180, label = "Alpha")
 plt.legend()
 #plt.xlim(left = 3)
 
@@ -126,15 +129,15 @@ plotalpha = np.arange(-10, 30 , 0.1)
 plotcl = np.zeros(len(plotalpha))
 for i in range(len(plotalpha)) :
     plotcl[i] = LiftCoeff(plotalpha[i])
-plt.plot(plotalpha[10:], plotcl[10:], label = "Cl(alpha)")
+plt.plot(plotalpha, plotcl, label = "Cl(alpha)")
 plt.legend()
 
 # Plot the 2 induction factors along the blade
 
 # Two subplots, unpack the axes array immediately
 f, (ax1, ax2) = plt.subplots(1, 2, sharey=False)
-ax1.plot(r[10:],a[10:])
-ax2.plot(r[10:],aa[10:])
+ax1.plot(r,a)
+ax2.plot(r,aa)
 ax1.set_title("a(r)")
 ax2.set_title("a'(r)")
 

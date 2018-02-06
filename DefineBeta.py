@@ -17,15 +17,17 @@ import matplotlib.pyplot as plt
 # Definition of Variales ###############################################################
 
 # Physical Parameters
-U0 = 10     # Incoming wind speed in m/s
-R = 50      # length of the blade in m
-Lambda = 8  # Tip speed ratio
-Omega = Lambda*U0/R     # Rotor angular velocity in radiants/s
+U0 = 10                             # Incoming wind speed in m/s
+R = 50                              # Length of the blade in m
+R_i = 5                             # Inner radius in m
+Lambda = 8                          # Tip speed ratio
+Omega = Lambda*U0/R                 # Rotor angular velocity in radiants/s
 
 # Computational Parmeters
-n = 100       # Number of blade elements
-dr = R/100    # Blade element length
-r = np.arange(dr, R+dr, dr) - dr/2  # Mid point radius of every element
+n = 100                             # Number of blade elements
+dr = (R-R_i)/n                      # Blade element length
+r = np.arange(dr+R_i, R+dr, dr)     # Mid point radius of every element
+Lambda_r = r*Lambda/R               # Local tip speed ratio
 
 # Results
 Phi = np.zeros(n)   # Angle of incoming wind in radiants
@@ -36,7 +38,7 @@ Beta = np.zeros(n)
 file = open("Beta.txt","w") 
 for i in range(n):
     # Calculationg the angle of the incoming wind
-    Phi[i] = math.atan(U0*(2/3)/(Omega*r[i]))
+    Phi[i] = (2/3)*math.atan(1/Lambda_r[i])
     Beta[i] = Phi[i] - 14/180*math.pi
     file.write(str(Beta[i]) + "\n")
 file.close() 
