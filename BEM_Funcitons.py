@@ -17,17 +17,15 @@ import tkinter.filedialog
 
 # Functions ############################################################################
 
-def LiftCoeff (alpha): 
+def LiftCoeff (alpha, AlphaData, ClData): 
     alpha = alpha*180/math.pi
     # Interpolate data from airfoiltools.net to obtain Cl for given alpha in degrees
-    Alpha = np.genfromtxt('xf-n0012-il-500000.txt', skip_header=12, usecols=0)
-    Cl = np.genfromtxt('xf-n0012-il-500000.txt', skip_header=12, usecols=1)
     i = 0
-    if alpha < Alpha[0]: return Cl[0]
-    if alpha > Alpha[-1]: return Cl[-1]
-    while not (Alpha[i] <= alpha and Alpha[i+1] > alpha):
+    if alpha < AlphaData[0]: return ClData[0]
+    if alpha > AlphaData[-1]: return ClData[-1]
+    while not (AlphaData[i] <= alpha and AlphaData[i+1] > alpha):
         i += 1
-    cl = (Cl[i+1]*(alpha-Alpha[i]) + Cl[i]*(Alpha[i+1]-alpha))/(Alpha[i+1]-Alpha[i]) 
+    cl = (ClData[i+1]*(alpha-AlphaData[i]) + ClData[i]*(AlphaData[i+1]-alpha))/(AlphaData[i+1]-AlphaData[i]) 
     return cl
 
 def LiftCoeffCalc (alpha):
@@ -60,9 +58,12 @@ def Performance_Wind_Turbine(Incoming_Wind, printing):
     Lambda = R*Omega/U0
     Lambda_r = r*Lambda/R               # Local tip speed ratio
     print('Lambda = ',Lambda)
+    
     # Blade characteristics
     c = np.genfromtxt("c.txt")          # Airfoil chord in m as function of r
     Beta = np.genfromtxt("Beta.txt")    # Twist angle in radians as function of r
+    AlphaData = np.genfromtxt('xf-n0012-il-500000.txt', skip_header=12, usecols=0)
+    ClData = np.genfromtxt('xf-n0012-il-500000.txt', skip_header=12, usecols=1)
 
     # Derived quantities
     Area = R**2*math.pi                 # Rotor area in m^2
@@ -90,35 +91,33 @@ def Performance_Wind_Turbine(Incoming_Wind, printing):
     a = [1/3]*n                         # Linear induction factor, initial guess
     aa = [0.0]*n                        # Angular induction factor, initial guess
 
-    # Variables for the iteration
-    Difference = 999
-    counter = 0
-    # Loop for the iteration
-    while (Difference > 10**(-5) or counter > 100) :
-        Difference = 0.0
-        for i in range(n):
+
+    for i in range(10,n):
+        # Variables for the iteration
+        Difference = 999
+        # Loop for the iteration
+        while (Difference > 10**(-5)) :
         # Calculationg the angle of the incoming wind
             Phi[i] = math.atan((1-a[i])/(1+aa[i])/Lambda_r[i])
             Alpha[i] = Phi[i]-Beta[i]
         # Calculating drag and lift coefficiet from empiric equation
-            Cl = LiftCoeff(Alpha[i])
+            Cl = LiftCoeff(Alpha[i], AlphaData, ClData)
             Cd = 0
         # Calculation of the new induction factors
             a_new = 1/(1+(2*math.sin(Phi[i]))**2/(Sigma[i]*Cl*math.cos(Phi[i])))
             aa_new = 1/((4*math.cos(Phi[i])/(Sigma[i]*Cl))-1)
-            if i > 10: Difference += (a_new-a[i])**2+(aa_new-aa[i])**2
+            Difference = (a_new-a[i])**2+(aa_new-aa[i])**2
             a[i] = a_new
             aa[i] = aa_new
-        counter += 1
-        if counter > 100 : break
-    # End of the iteration, a and aa are now final, and so are the lists of Alpha[i] and Phi[i]
+        # End of the iteration, a and aa are now final for one element
+    # Iteration finished for every blade element
 
     # Calculate the Forces and power of the turbine
-    for i in range(n):
+    for i in range(10,n):
     # Calculationg relative velocity
         Urel  = U0*(1-a[i])/math.sin(Phi[i])
     # Calculating drag and lift coefficiet from empiric equation
-        Cl = LiftCoeff(Alpha[i])
+        Cl = LiftCoeff(Alpha[i], AlphaData, ClData)
         Cd = 0
     # Calculation Momentum and Thrust from the forces
         dM[i] = N*0.5*Rho*Urel**2*(Cl*math.sin(Phi[i])-Cd*math.cos(Phi[i]))*c[i]*r[i]*dr
@@ -148,7 +147,7 @@ def Performance_Wind_Turbine(Incoming_Wind, printing):
         plotalpha = np.arange(-10, 30 , 0.1)
         plotcl = np.zeros(len(plotalpha))
         for i in range(len(plotalpha)) :
-            plotcl[i] = LiftCoeff(plotalpha[i]/180*math.pi)
+            plotcl[i] = LiftCoeff(plotalpha[i]/180*math.pi, AlphaData, ClData)
         plt.plot(plotalpha, plotcl, label = "Cl(alpha)")
         plt.legend()
 
