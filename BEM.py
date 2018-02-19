@@ -23,7 +23,9 @@ from BEM_Funcitons import Performance_Wind_Turbine
 # Calling the functions ###############################################################
 
 Cp = [0]*30
-for i in range(30):
-    Cp[i] = Performance_Wind_Turbine(i+1, False)
+plt.figure
+#for i in range(30):
+Cp[i] = Performance_Wind_Turbine(10, True)#i+1, False)
+plt.plot(i, Cp[i], 'b*')
 
-plt.plot(Cp)
+plt.show()
