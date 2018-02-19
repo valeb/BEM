@@ -17,19 +17,20 @@ import tkinter.filedialog
 
 # Functions ############################################################################
 
-def LiftCoeffImport (alpha): 
-    # Interpolate data from airfoiltools.net to obtain Cl for given alpha
+def LiftCoeff (alpha): 
+    alpha = alpha*180/math.pi
+    # Interpolate data from airfoiltools.net to obtain Cl for given alpha in degrees
     Alpha = np.genfromtxt('xf-n0012-il-500000.txt', skip_header=12, usecols=0)
     Cl = np.genfromtxt('xf-n0012-il-500000.txt', skip_header=12, usecols=1)
     i = 0
-    if alpha < Alpha[0]: return Alpha[0]
-    if alpha > Alpha[-1]: return Alpha[-1]
+    if alpha < Alpha[0]: return Cl[0]
+    if alpha > Alpha[-1]: return Cl[-1]
     while not (Alpha[i] <= alpha and Alpha[i+1] > alpha):
         i += 1
     cl = (Cl[i+1]*(alpha-Alpha[i]) + Cl[i]*(Alpha[i+1]-alpha))/(Alpha[i+1]-Alpha[i]) 
     return cl
 
-def LiftCoeff (alpha):
+def LiftCoeffCalc (alpha):
     alpha = alpha*180/math.pi
     if alpha<21:
         Cl = 0.42625 + 0.11628 * alpha - 0.00063973 * alpha**2 - 8.712 * 10**(-5) * alpha**3 - 4.2576 * 10**(-6)*alpha**4
@@ -147,7 +148,7 @@ def Performance_Wind_Turbine(Incoming_Wind, printing):
         plotalpha = np.arange(-10, 30 , 0.1)
         plotcl = np.zeros(len(plotalpha))
         for i in range(len(plotalpha)) :
-            plotcl[i] = LiftCoeff(plotalpha[i])
+            plotcl[i] = LiftCoeff(plotalpha[i]/180*math.pi)
         plt.plot(plotalpha, plotcl, label = "Cl(alpha)")
         plt.legend()
 
