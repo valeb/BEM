@@ -17,7 +17,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tkinter.filedialog
 
-from BEM_Funcitons import LiftCoeff
 from BEM_Funcitons import Performance_Wind_Turbine
 
 # Calling the functions ###############################################################
@@ -30,17 +29,14 @@ Mmax = [0]*n
 Foilmax = [len(Airfoilnames)]*n
 for i  in range(len(Airfoilnames)) :
     M = Performance_Wind_Turbine(10, Airfoilnames[i], False)
-    print(M)
     for j in range(n):
         if M[j] > Mmax[j] :
             Mmax[j] = M[j]
             Foilmax[j] = i
 
-print(Foilmax)
-
 for foil in Foilmax :
     if foil < len(Airfoilnames) :    
-        print(Airfoilnames[foil])      
+        print(Airfoilnames[foil][21:])      
     else :
         print('Cylinder')
 plt.show()

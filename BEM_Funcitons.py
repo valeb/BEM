@@ -14,6 +14,33 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tkinter.filedialog
 
+# Global Variables ####################################################################
+
+# Physical Parameters
+#U0 = 10                             # Incoming wind speed in m/s
+Rho = 1.225                         # Air density in kg/m^3
+R = 50                              # length of the blade in m
+N = 3                               # Number of blades
+Omega = 1.6                         # Rotor angular velocity to obtain Lambda = 8 at 10m/s
+Area = R**2*math.pi                 # Rotor area in m^2
+
+# Computational Parmeters
+n = 100                             # Number of blade elements
+dr = R/n                      # Blade element length
+r = np.arange(dr, R+dr, dr)     # Mid point radius of every element
+
+# Results
+Cp = 0.0                            # Power Coefficient
+Ct = 0.0                            # Thrust coefficient
+dL = [0.0] * n                      # Lift on each elment in N
+dD = [0.0] * n                      # Drag on each elment in N
+dM = [0.0] * n                      # Momentm on each elment in Nm
+M = 0.0                             # Total momentum in Nm
+P = 0.0                             # Power in W
+dT = [0.0] * n                      # Thrust force on each element in N
+T = 0.0                             # Total thrust force
+Phi = np.zeros(n)                   # Angle of incoming wind in radiants
+Alpha = np.zeros(n)                 # Angle of attack in radiants
 
 # Functions ############################################################################
 
@@ -28,7 +55,7 @@ def Coefficient (alpha, AlphaData, CoeffData):
     coeff = (CoeffData[i+1]*(alpha-AlphaData[i]) + CoeffData[i]*(AlphaData[i+1]-alpha))/(AlphaData[i+1]-AlphaData[i]) 
     return coeff
 
-def LiftCoeff (alpha, AlphaData, ClData):
+def LiftCoeffApprox (alpha, AlphaData, ClData):
     alpha = alpha*180/math.pi
     if alpha<21:
         Cl = 0.42625 + 0.11628 * alpha - 0.00063973 * alpha**2 - 8.712 * 10**(-5) * alpha**3 - 4.2576 * 10**(-6)*alpha**4
@@ -36,27 +63,38 @@ def LiftCoeff (alpha, AlphaData, ClData):
         Cl = 0.95
     return Cl
 
+def Iterate_a_aa (i, AlphaData, ClData, CdData, Sigma, Lambda_r, Beta) :
+    # Variables for the iteration
+    Difference = 10
+    a = 1/3
+    aa = 0
+    # Loop for the iteration
+    while (Difference > 10**(-4)) :
+    # Calculationg the angle of the incoming wind
+        Phi[i] = math.atan((1-a)/(1+aa)/Lambda_r[i])
+        Alpha[i] = Phi[i]-Beta[i]
+    # Calculating drag and lift coefficiet from empiric equation
+        Cl = Coefficient(Alpha[i], AlphaData, ClData)
+        Cd = Coefficient(Alpha[i], AlphaData, CdData)
+    # Calculation of the new induction factors
+        a_new = 1/(1+(2*math.sin(Phi[i]))**2/(Sigma[i]*Cl*math.cos(Phi[i])))
+        aa_new = 1/((4*math.cos(Phi[i])/(Sigma[i]*Cl))-1)
+        Difference = (a_new-a)**2+(aa_new-aa)**2
+        a = a_new
+        aa = aa_new
+# End of the iteration
+    return([a, aa])
+
 def Performance_Wind_Turbine(Incoming_Wind, foilfile, printing):
     # Evaluate performance of a wind turbine given the incoming wind.
     # The wind turbine is defined by files Beta.txt, c.txt and foilfile!
 
-    # Definition of Variables       ##########################################################
-
-    # Physical Parameters
-    #U0 = 10                             # Incoming wind speed in m/s
+    # Definition of Parameters       ##########################################################
+    
     U0 = Incoming_Wind
-    Rho = 1.225                         # Air density in kg/m^3
-    R = 50                              # length of the blade in m
-    R_i = 5                             # Inner radius in m
-    N = 3                               # Number of blades
-    Omega = 1.6                         # Rotor angular velocity optimized for Lambda = 8
-
-    # Computational Parmeters
-    n = 100                             # Number of blade elements
-    dr = (R-R_i)/n                      # Blade element length
-    r = np.arange(dr+R_i, R+dr, dr)     # Mid point radius of every element
     Lambda = R*Omega/U0
     Lambda_r = r*Lambda/R               # Local tip speed ratio
+    Pin = 1/2*U0**3*Rho*Area            # Incoming wind power in W
     
     # Blade characteristics
     c = np.genfromtxt("c.txt")          # Airfoil chord in m as function of r
@@ -64,56 +102,22 @@ def Performance_Wind_Turbine(Incoming_Wind, foilfile, printing):
     AlphaData = np.genfromtxt(foilfile, usecols=0)
     ClData = np.genfromtxt(foilfile, usecols=1)
     CdData = np.genfromtxt(foilfile, usecols=2)
-    
-    # Derived quantities
-    Area = R**2*math.pi                 # Rotor area in m^2
-    Pin = 1/2*U0**3*Rho*Area            # Incoming wind power in W
     Sigma = np.zeros(n)                 # Local solitity
     for i in range(n):
         Sigma[i] = min(N*c[i]/(2*math.pi*r[i]), 1)
 
-
-    # Results
-    Cp = 0.0                            # Power Coefficient
-    Ct = 0.0                            # Thrust coefficient
-    dL = [0.0] * n                      # Lift on each elment in N
-    dD = [0.0] * n                      # Drag on each elment in N
-    dM = [0.0] * n                      # Momentm on each elment in Nm
-    M = 0.0                             # Total momentum in Nm
-    P = 0.0                             # Power in W
-    dT = [0.0] * n                      # Thrust force on each element in N
-    T = 0.0                             # Total thrust force
-    Phi = np.zeros(n)                   # Angle of incoming wind in radiants
-    Alpha = np.zeros(n)                 # Angle of attack in radiants
-
     # Main Program #######################################################################
 
-    a = [1/3]*n                         # Linear induction factor, initial guess
+    a = [0]*n                         # Linear induction factor, initial guess
     aa = [0.0]*n                        # Angular induction factor, initial guess
-    for i in range(10,n):
-        # Variables for the iteration
-        Difference = 999
-        # Loop for the iteration
-        while (Difference > 10**(-5)) :
-        # Calculationg the angle of the incoming wind
-            Phi[i] = math.atan((1-a[i])/(1+aa[i])/Lambda_r[i])
-            Alpha[i] = Phi[i]-Beta[i]
-        # Calculating drag and lift coefficiet from empiric equation
-            Cl = Coefficient(Alpha[i], AlphaData, ClData)
-            #Cd = Coefficient(Alpha[i], AlphaData, CdData)
-        # Calculation of the new induction factors
-            a_new = 1/(1+(2*math.sin(Phi[i]))**2/(Sigma[i]*Cl*math.cos(Phi[i])))
-            aa_new = 1/((4*math.cos(Phi[i])/(Sigma[i]*Cl))-1)
-            Difference = (a_new-a[i])**2+(aa_new-aa[i])**2
-            a[i] = a_new
-            aa[i] = aa_new
-        # End of the iteration, a and aa are now final for one element
-
+    for i in range(n):
+        result = Iterate_a_aa(i, AlphaData, ClData, CdData, Sigma, Lambda_r, Beta)
+        a[i] = result[0]; aa[i] = result[1]        
         # End of the iteration, a and aa are now final for one element
     # Iteration finished for every blade element ###########################################
 
     # Calculate the Forces and power of the turbine
-    for i in range(10,n):
+    for i in range(n):
     # Calculationg relative velocity
         Urel  = U0*(1-a[i])/math.sin(Phi[i])
     # Calculating drag and lift coefficiet from empiric equation
@@ -175,8 +179,6 @@ def Performance_Wind_Turbine(Incoming_Wind, foilfile, printing):
         for num in Alpha:
             file.write(str(num) + "\n")
         file.close()
-
-        plt.show()
     return dM
 
 
