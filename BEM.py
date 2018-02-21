@@ -22,12 +22,25 @@ from BEM_Funcitons import Performance_Wind_Turbine
 
 # Calling the functions ###############################################################
 
-Cp = [0]*300
-plt.figure
-for i in range(40,300):
-    Cp[i] = Performance_Wind_Turbine(i/10, False)
-    plt.plot(i/10, Cp[i], 'b*')
+Airfoilnames = ['./2DAirfoilDataFiles/NACA 0615A.txt','./2DAirfoilDataFiles/NACA 1412.txt','./2DAirfoilDataFiles/NACA 23021.txt','./2DAirfoilDataFiles/NACA 63012A.txt','./2DAirfoilDataFiles/NACA 64008A.txt', './2DAirfoilDataFiles/DU 06W200.txt']
 
-#print(Performance_Wind_Turbine(10, True))
+n = 100
 
+Mmax = [0]*n
+Foilmax = [len(Airfoilnames)]*n
+for i  in range(len(Airfoilnames)) :
+    M = Performance_Wind_Turbine(10, Airfoilnames[i], False)
+    print(M)
+    for j in range(n):
+        if M[j] > Mmax[j] :
+            Mmax[j] = M[j]
+            Foilmax[j] = i
+
+print(Foilmax)
+
+for foil in Foilmax :
+    if foil < len(Airfoilnames) :    
+        print(Airfoilnames[foil])      
+    else :
+        print('Cylinder')
 plt.show()

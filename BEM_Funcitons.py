@@ -17,18 +17,18 @@ import tkinter.filedialog
 
 # Functions ############################################################################
 
-def LiftCoeff (alpha, AlphaData, ClData): 
+def Coefficient (alpha, AlphaData, CoeffData): 
     alpha = alpha*180/math.pi
-    # Interpolate data from airfoiltools.net to obtain Cl for given alpha in degrees
+    # Interpolate data to obtain Cl or Cd for given alpha in degrees
     i = 0
-    if alpha < AlphaData[0]: return ClData[0]
-    if alpha > AlphaData[-1]: return ClData[-1]
+    if alpha < AlphaData[0]: return CoeffData[0]
+    if alpha > AlphaData[-1]: return CoeffData[-1]
     while not (AlphaData[i] <= alpha and AlphaData[i+1] > alpha):
         i += 1
-    cl = (ClData[i+1]*(alpha-AlphaData[i]) + ClData[i]*(AlphaData[i+1]-alpha))/(AlphaData[i+1]-AlphaData[i]) 
-    return cl
+    coeff = (CoeffData[i+1]*(alpha-AlphaData[i]) + CoeffData[i]*(AlphaData[i+1]-alpha))/(AlphaData[i+1]-AlphaData[i]) 
+    return coeff
 
-def LiftCoeffCalc (alpha):
+def LiftCoeff (alpha, AlphaData, ClData):
     alpha = alpha*180/math.pi
     if alpha<21:
         Cl = 0.42625 + 0.11628 * alpha - 0.00063973 * alpha**2 - 8.712 * 10**(-5) * alpha**3 - 4.2576 * 10**(-6)*alpha**4
@@ -36,9 +36,9 @@ def LiftCoeffCalc (alpha):
         Cl = 0.95
     return Cl
 
-def Performance_Wind_Turbine(Incoming_Wind, printing):
+def Performance_Wind_Turbine(Incoming_Wind, foilfile, printing):
     # Evaluate performance of a wind turbine given the incoming wind.
-    # The wind turbine is defined by files Beta.txt, 
+    # The wind turbine is defined by files Beta.txt, c.txt and foilfile!
 
     # Definition of Variables       ##########################################################
 
@@ -57,14 +57,14 @@ def Performance_Wind_Turbine(Incoming_Wind, printing):
     r = np.arange(dr+R_i, R+dr, dr)     # Mid point radius of every element
     Lambda = R*Omega/U0
     Lambda_r = r*Lambda/R               # Local tip speed ratio
-    print('Lambda = ',Lambda)
     
     # Blade characteristics
     c = np.genfromtxt("c.txt")          # Airfoil chord in m as function of r
     Beta = np.genfromtxt("Beta.txt")    # Twist angle in radians as function of r
-    AlphaData = np.genfromtxt('xf-n0012-il-500000.txt', skip_header=12, usecols=0)
-    ClData = np.genfromtxt('xf-n0012-il-500000.txt', skip_header=12, usecols=1)
-
+    AlphaData = np.genfromtxt(foilfile, usecols=0)
+    ClData = np.genfromtxt(foilfile, usecols=1)
+    CdData = np.genfromtxt(foilfile, usecols=2)
+    
     # Derived quantities
     Area = R**2*math.pi                 # Rotor area in m^2
     Pin = 1/2*U0**3*Rho*Area            # Incoming wind power in W
@@ -90,8 +90,6 @@ def Performance_Wind_Turbine(Incoming_Wind, printing):
 
     a = [1/3]*n                         # Linear induction factor, initial guess
     aa = [0.0]*n                        # Angular induction factor, initial guess
-
-
     for i in range(10,n):
         # Variables for the iteration
         Difference = 999
@@ -101,8 +99,8 @@ def Performance_Wind_Turbine(Incoming_Wind, printing):
             Phi[i] = math.atan((1-a[i])/(1+aa[i])/Lambda_r[i])
             Alpha[i] = Phi[i]-Beta[i]
         # Calculating drag and lift coefficiet from empiric equation
-            Cl = LiftCoeff(Alpha[i], AlphaData, ClData)
-            Cd = 0
+            Cl = Coefficient(Alpha[i], AlphaData, ClData)
+            #Cd = Coefficient(Alpha[i], AlphaData, CdData)
         # Calculation of the new induction factors
             a_new = 1/(1+(2*math.sin(Phi[i]))**2/(Sigma[i]*Cl*math.cos(Phi[i])))
             aa_new = 1/((4*math.cos(Phi[i])/(Sigma[i]*Cl))-1)
@@ -110,15 +108,17 @@ def Performance_Wind_Turbine(Incoming_Wind, printing):
             a[i] = a_new
             aa[i] = aa_new
         # End of the iteration, a and aa are now final for one element
-    # Iteration finished for every blade element
+
+        # End of the iteration, a and aa are now final for one element
+    # Iteration finished for every blade element ###########################################
 
     # Calculate the Forces and power of the turbine
     for i in range(10,n):
     # Calculationg relative velocity
         Urel  = U0*(1-a[i])/math.sin(Phi[i])
     # Calculating drag and lift coefficiet from empiric equation
-        Cl = LiftCoeff(Alpha[i], AlphaData, ClData)
-        Cd = 0
+        Cl = Coefficient(Alpha[i], AlphaData, ClData)
+        Cd = Coefficient(Alpha[i], AlphaData, CdData)
     # Calculation Momentum and Thrust from the forces
         dM[i] = N*0.5*Rho*Urel**2*(Cl*math.sin(Phi[i])-Cd*math.cos(Phi[i]))*c[i]*r[i]*dr
         dT[i] = N*0.5*Rho*Urel**2*(Cl*math.cos(Phi[i])+Cd*math.sin(Phi[i]))*c[i]*dr
@@ -144,12 +144,10 @@ def Performance_Wind_Turbine(Incoming_Wind, printing):
 
         # Plot Cl Curve
         plt.figure()
-        plotalpha = np.arange(-10, 30 , 0.1)
-        plotcl = np.zeros(len(plotalpha))
-        for i in range(len(plotalpha)) :
-            plotcl[i] = LiftCoeff(plotalpha[i]/180*math.pi, AlphaData, ClData)
-        plt.plot(plotalpha, plotcl, label = "Cl(alpha)")
+        plt.plot(AlphaData, ClData, label = "Cl(alpha)")
+        plt.plot(AlphaData, CdData, label = "Cd(alpha)")
         plt.legend()
+
 
         # Plot the 2 induction factors along the blade
 
@@ -179,6 +177,6 @@ def Performance_Wind_Turbine(Incoming_Wind, printing):
         file.close()
 
         plt.show()
-    return Cp
+    return dM
 
 
