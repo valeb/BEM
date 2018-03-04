@@ -1,7 +1,6 @@
-
 #########################################################################
 #                                                                       #
-#  Oprimization of a wind turbine for a given incoming wind             #
+#  Performance analysis of a wind turbine for a given incoming wind     #
 #  using blade element momentum theory                                  #
 #                                                                       #
 #  Alija Bajramovic                                                     #
@@ -51,7 +50,7 @@ def Coefficient (alpha, AlphaData, CoeffData):
     coeff = (CoeffData[i+1]*(alpha-AlphaData[i]) + CoeffData[i]*(AlphaData[i+1]-alpha))/(AlphaData[i+1]-AlphaData[i]) 
     return coeff
 
-def Iterate_a_aa (AlphaData, ClData, Lambda_r, Beta, Sigma) :
+def Iterate_a_aa ( AlphaData, ClData, Lambda_r, Beta, Sigma) :
     # Variables for the iteration
     Difference = 10
     a = 1/3
@@ -79,10 +78,7 @@ def Iterate_a_aa (AlphaData, ClData, Lambda_r, Beta, Sigma) :
 
 # Calling the functions ###############################################################
 
-Airfoils = [join('./2DAirfoilDataFiles/NACA',f) for f in listdir('./2DAirfoilDataFiles/NACA') if isfile(join('./2DAirfoilDataFiles/NACA', f)) and f[-1] == 't']
-
-print(Airfoils)
-
+Airfoils = [join('./2DAirfoilDataFiles',f) for f in listdir('./2DAirfoilDataFiles') if isfile(join('./2DAirfoilDataFiles', f)) and f[-1] == 't']
 
 # Define best performance variables!
 Mmax = [0]*n
@@ -90,57 +86,39 @@ Cmax = [2]*n
 BetaMax = [0]*n
 Fmax = [0]*n
 
-for j in range(1,len(Airfoils)) :
-    print(j)
-    AlphaData = np.genfromtxt(Airfoils[j], usecols=0)
-    ClData = np.genfromtxt(Airfoils[j], usecols=1)
-    CdData = np.genfromtxt(Airfoils[j], usecols=2)
-    for i in range(n-1, 4, -1) :
-        r = (i+1)*dr                # Local radius
-        Lambda_r = r*Lambda/R       # Local tip speed ratio
-        for Beta in np.arange(-20, 20, 1) :
-            for c in np.arange(0.1, min(math.ceil((2*math.pi*r)/N), 10), 1) :
+for i in range(n-1, 4, -1) :
+    print(i)
+    r = (i+1)*dr                # Local radius
+    Lambda_r = r*Lambda/R       # Local tip speed ratio
+    for j in range(1,len(Airfoils)):
+        kek = j
+        AlphaData = np.genfromtxt(Airfoils[kek], usecols=0)
+        ClData = np.genfromtxt(Airfoils[kek], usecols=1)
+        CdData = np.genfromtxt(Airfoils[kek], usecols=2)
+        if i >= n-2 :
+            rangeC = np.arange(1, 3, 0.1)
+            rangeBeta = np.arange(-5, 5, 0.2)
+        else:
+            expectedC = 2*Cmax[i+1]-Cmax[i+2]
+            expectedBeta = 2*BetaMax[i+1]-BetaMax[i+2]
+            rangeC = np.arange(expectedC-0.3,expectedC+0.3, 0.01)
+            rangeBeta = np.arange(expectedBeta-0.5, expectedBeta+0.5, 0.05)
+        for Beta in rangeBeta :
+           for c in rangeC :
                 Sigma = N*c/(2*math.pi*r)
                 [a, aa, Phi, Cl, Cd] = Iterate_a_aa(AlphaData, ClData, Lambda_r, Beta, Sigma)
                 if a == 9 : break
                 # Calculationg relative velocity
                 Urel  = U0*(1-a)/math.sin(Phi)
-                # Calculation Momentum from the forces
+                # Calculation Momentum and Thrust from the forces
                 M = N*0.5*Rho*Urel**2*(Cl*math.sin(Phi)-Cd*math.cos(Phi))*c*r*dr
                 if M > Mmax[i] :
                     Mmax[i] = M
                     Cmax[i] = c
                     BetaMax[i] = Beta
                     Fmax[i] = j
-        for Beta in np.arange(BetaMax[i]-2, BetaMax[i]+2, 0.1) :
-            for c in np.arange(Cmax[i]-2, Cmax[i]+2, 0.1) :
-                Sigma = N*c/(2*math.pi*r)
-                [a, aa, Phi, Cl, Cd] = Iterate_a_aa(AlphaData, ClData, Lambda_r, Beta, Sigma)
-                if a == 9 : break
-                # Calculationg relative velocity
-                Urel  = U0*(1-a)/math.sin(Phi)
-                # Calculation Momentum and Thrust from the forces
-                M = N*0.5*Rho*Urel**2*(Cl*math.sin(Phi)-Cd*math.cos(Phi))*c*r*dr
-                if M >= Mmax[i] :
-                    Mmax[i] = M
-                    Cmax[i] = c
-                    BetaMax[i] = Beta
-                    Fmax[i] = j
-        for Beta in np.arange(BetaMax[i]-0.2, BetaMax[i]+0.2, 0.01) :
-            for c in np.arange(Cmax[i]-0.2, Cmax[i]+0.2, 0.01) :
-                Sigma = N*c/(2*math.pi*r)
-                [a, aa, Phi, Cl, Cd] = Iterate_a_aa(AlphaData, ClData, Lambda_r, Beta, Sigma)
-                if a == 9 : break
-                # Calculationg relative velocity
-                Urel  = U0*(1-a)/math.sin(Phi)
-                # Calculation Momentum and Thrust from the forces
-                M = N*0.5*Rho*Urel**2*(Cl*math.sin(Phi)-Cd*math.cos(Phi))*c*r*dr
-                if M >= Mmax[i] :
-                    Mmax[i] = M
-                    Cmax[i] = c
-                    BetaMax[i] = Beta
-                    Fmax[i] = j
 
+Fmax[i] = j
 
 P = sum(Mmax)*Omega
 Cp = P/Pin
@@ -148,17 +126,43 @@ Cp = P/Pin
 # Outputs
 
 for i in range(n) :
-    print(i, 'c =', Cmax[i], 'Beta =', BetaMax[i], 'Foil =', Airfoils[Fmax[i]][21:-4],'(',Fmax[i],')', )
-
+    print(i, 'c =', Cmax[i], 'Beta =', BetaMax[i], 'Foil =', Airfoils[Fmax[i]][21:-4])
 print('cp =', Cp)
+
+plt.figure()
+plt.plot(np.genfromtxt(Airfoils[Fmax[-1]], usecols=0), np.genfromtxt(Airfoils[Fmax[-1]], usecols=1), label = "Cl")
+plt.plot(np.genfromtxt(Airfoils[Fmax[-1]], usecols=0), np.genfromtxt(Airfoils[Fmax[-1]], usecols=2), label = "Cd")
+plt.legend()
 
 
 plt.figure()
-plt.plot(Cmax, label = "c")
+plt.plot(Cmax, 'b-', label = "c")
+plt.plot([0,0,99, 99],  [2,0,0,Cmax[-1]], 'b-') 
 plt.legend()
 
 plt.figure()
 plt.plot(BetaMax, label = "Beta")
 plt.legend()
 
+
 plt.show()
+
+# File output ####################################################################
+
+# Export resulting Alpha along the blade
+file = open("Beta.txt","w") 
+for num in BetaMax:
+    file.write(str(num) + "\n")
+file.close()
+
+file = open("c.txt","w") 
+for num in Cmax:
+    file.write(str(num) + "\n")
+file.close()
+
+file = open("Foils.txt","w") 
+for num in Fmax:
+    file.write(Airfoils[num] + "\n")
+file.close()
+
+
