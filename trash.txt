@@ -1,0 +1,29 @@
+        for Beta in np.arange(BetaMax[i]-1, BetaMax[i]+1, 0.1) :
+            for c in np.arange(Cmax[i]-1, Cmax[i]+1, 0.1) :
+                Sigma = N*c/(2*math.pi*r)
+                [a, aa, Phi, Cl, Cd] = Iterate_a_aa(i, AlphaData, ClData, Lambda_r, Beta, Sigma)
+                if a == 9 : break
+                # Calculationg relative velocity
+                Urel  = U0*(1-a)/math.sin(Phi)
+                # Calculation Momentum and Thrust from the forces
+                M = N*0.5*Rho*Urel**2*(Cl*math.sin(Phi)-Cd*math.cos(Phi))*c*r*dr
+                if M >= Mmax[i] :
+                    Mmax[i] = M
+                    Cmax[i] = c
+                    BetaMax[i] = Beta
+                    Fmax[i] = j
+
+        for Beta in np.arange(BetaMax[i]-0.1, BetaMax[i]+0.1, 0.01) :
+            for c in np.arange(Cmax[i]-0.1, Cmax[i]+0.1, 0.01) :
+                Sigma = N*c/(2*math.pi*r)
+                [a, aa, Phi, Cl, Cd] = Iterate_a_aa(i, AlphaData, ClData, Lambda_r, Beta, Sigma)
+                if a == 9 : break
+                # Calculationg relative velocity
+                Urel  = U0*(1-a)/math.sin(Phi)
+                # Calculation Momentum and Thrust from the forces
+                M = N*0.5*Rho*Urel**2*(Cl*math.sin(Phi)-Cd*math.cos(Phi))*c*r*dr
+                if M >= Mmax[i] :
+                    Mmax[i] = M
+                    Cmax[i] = c
+                    BetaMax[i] = Beta
+                    Fmax[i] = j

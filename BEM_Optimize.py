@@ -66,6 +66,7 @@ def Iterate_a_aa (AlphaData, ClData, Lambda_r, Beta, Sigma) :
     # Calculating drag and lift coefficiet from empiric equation
         Cl = Coefficient(Alpha, AlphaData, ClData)
         Cd = Coefficient(Alpha, AlphaData, CdData)
+        if Cl == 0 : Cl += 0.0001
     # Calculation of the new induction factors
         a_new = 1/(1+(2*math.sin(Phi))**2/(Sigma*Cl*math.cos(Phi)))
         aa_new = 1/((4*math.cos(Phi)/(Sigma*Cl))-1)
@@ -79,7 +80,8 @@ def Iterate_a_aa (AlphaData, ClData, Lambda_r, Beta, Sigma) :
 
 # Calling the functions ###############################################################
 
-Airfoils = [join('./2DAirfoilDataFiles/NACA',f) for f in listdir('./2DAirfoilDataFiles/NACA') if isfile(join('./2DAirfoilDataFiles/NACA', f)) and f[-1] == 't']
+Airfoils = [join('./2DAirfoilDataFiles',f) for f in listdir('./2DAirfoilDataFiles') if isfile(join('./2DAirfoilDataFiles', f)) and f[-1] == 't']
+#Airfoils = [join('./2DAirfoilDataFiles/NACA',f) for f in listdir('./2DAirfoilDataFiles/NACA') if isfile(join('./2DAirfoilDataFiles/NACA', f)) and f[-1] == 't']
 
 print(Airfoils)
 
@@ -88,10 +90,10 @@ print(Airfoils)
 Mmax = [0]*n
 Cmax = [2]*n
 BetaMax = [0]*n
-Fmax = [0]*n
+Fmax = [99]*n
 
 for j in range(1,len(Airfoils)) :
-    print(j)
+    print(j, Airfoils[j])
     AlphaData = np.genfromtxt(Airfoils[j], usecols=0)
     ClData = np.genfromtxt(Airfoils[j], usecols=1)
     CdData = np.genfromtxt(Airfoils[j], usecols=2)
@@ -99,7 +101,7 @@ for j in range(1,len(Airfoils)) :
         r = (i+1)*dr                # Local radius
         Lambda_r = r*Lambda/R       # Local tip speed ratio
         for Beta in np.arange(-20, 20, 1) :
-            for c in np.arange(0.1, min(math.ceil((2*math.pi*r)/N), 10), 1) :
+            for c in np.arange(0.1, min(math.ceil((2*math.pi*r)/N), 5), 1) :
                 Sigma = N*c/(2*math.pi*r)
                 [a, aa, Phi, Cl, Cd] = Iterate_a_aa(AlphaData, ClData, Lambda_r, Beta, Sigma)
                 if a == 9 : break
@@ -147,7 +149,7 @@ Cp = P/Pin
 
 # Outputs
 
-for i in range(n) :
+for i in range(5,n) :
     print(i, 'c =', Cmax[i], 'Beta =', BetaMax[i], 'Foil =', Airfoils[Fmax[i]][21:-4],'(',Fmax[i],')', )
 
 print('cp =', Cp)
@@ -160,5 +162,26 @@ plt.legend()
 plt.figure()
 plt.plot(BetaMax, label = "Beta")
 plt.legend()
+
+# File output ####################################################################
+
+# Export resulting c and Beta
+file = open("Beta.txt","w") 
+for num in BetaMax:
+    file.write(str(num) + "\n")
+file.close()
+
+file = open("c.txt","w") 
+for num in Cmax:
+    file.write(str(num) + "\n")
+file.close()
+
+file = open("Foils.txt","w") 
+for num in Fmax:
+    if num == 99 :
+        file.write( 'Cylinder.txt' + "\n")
+    else :
+        file.write(Airfoils[num] + "\n")
+file.close()
 
 plt.show()

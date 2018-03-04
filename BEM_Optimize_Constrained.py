@@ -78,7 +78,8 @@ def Iterate_a_aa ( AlphaData, ClData, Lambda_r, Beta, Sigma) :
 
 # Calling the functions ###############################################################
 
-Airfoils = [join('./2DAirfoilDataFiles',f) for f in listdir('./2DAirfoilDataFiles') if isfile(join('./2DAirfoilDataFiles', f)) and f[-1] == 't']
+#Airfoils = [join('./2DAirfoilDataFiles',f) for f in listdir('./2DAirfoilDataFiles') if isfile(join('./2DAirfoilDataFiles', f)) and f[-1] == 't']
+Airfoils = [join('./2DAirfoilDataFiles/NACA',f) for f in listdir('./2DAirfoilDataFiles/NACA') if isfile(join('./2DAirfoilDataFiles/NACA', f)) and f[-1] == 't']
 
 # Define best performance variables!
 Mmax = [0]*n
@@ -96,7 +97,7 @@ for i in range(n-1, 4, -1) :
         ClData = np.genfromtxt(Airfoils[kek], usecols=1)
         CdData = np.genfromtxt(Airfoils[kek], usecols=2)
         if i >= n-2 :
-            rangeC = np.arange(1, 3, 0.1)
+            rangeC = np.arange(0, 3, 0.1)
             rangeBeta = np.arange(-5, 5, 0.2)
         else:
             expectedC = 2*Cmax[i+1]-Cmax[i+2]
@@ -144,12 +145,9 @@ plt.figure()
 plt.plot(BetaMax, label = "Beta")
 plt.legend()
 
-
-plt.show()
-
 # File output ####################################################################
 
-# Export resulting Alpha along the blade
+# Export resulting c and Beta
 file = open("Beta.txt","w") 
 for num in BetaMax:
     file.write(str(num) + "\n")
@@ -162,7 +160,10 @@ file.close()
 
 file = open("Foils.txt","w") 
 for num in Fmax:
-    file.write(Airfoils[num] + "\n")
+    if num == 99 :
+        file.write( 'Cylinder.txt' + "\n")
+    else :
+        file.write(Airfoils[num] + "\n")
 file.close()
 
-
+plt.show()
